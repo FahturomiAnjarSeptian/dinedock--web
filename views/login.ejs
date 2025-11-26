@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | DineDock Premium</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('/img/restaurant.jpg');
+            background-size: cover;
+        }
+        .login-card {
+            background: rgba(20, 20, 20, 0.95);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            width: 100%;
+            max-width: 400px;
+            border-top: 4px solid #c5a059;
+            text-align: center;
+        }
+        .toggle-btn {
+            background: none; border: none; color: #c5a059; cursor: pointer; text-decoration: underline; font-size: 0.9rem;
+        }
+        /* Tombol Google */
+        .btn-google {
+            background: white; color: #333; width: 100%; padding: 12px;
+            border: none; border-radius: 4px; font-weight: bold; margin-bottom: 15px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: 0.2s;
+        }
+        .btn-google:hover { background: #f1f1f1; }
+        .divider { margin: 20px 0; color: #666; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <h1 style="color: #c5a059; font-family: 'Playfair Display', serif; margin-bottom: 5px;">DineDock</h1>
+        <p style="color: #888; margin-bottom: 30px; font-size: 0.9rem;">Integrated Reservation System</p>
+
+        <div id="error-message" style="display: none; color: #ff4444; font-size: 0.8rem; background: rgba(255,0,0,0.1); padding: 10px; margin-bottom: 10px;"></div>
+
+        <% if (typeof error !== 'undefined') { %>
+            <p style="color: #ff4444; font-size: 0.8rem; background: rgba(255,0,0,0.1); padding: 10px;"><%= error %></p>
+        <% } %>
+
+        <div id="login-form">
+            
+            <form action="/login" method="POST">
+                <div class="form-group">
+                    <input type="email" name="email" required placeholder="Email Address">
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" required placeholder="Password">
+                </div>
+                <button type="submit" class="btn-submit">ENTER SYSTEM</button>
+            </form>
+
+            <div style="display: flex; align-items: center; margin: 20px 0; color: #666; font-size: 0.8rem;">
+                <hr style="flex: 1; border: 0; border-top: 1px solid #444;">
+                <span style="padding: 0 10px;">OR</span>
+                <hr style="flex: 1; border: 0; border-top: 1px solid #444;">
+            </div>
+
+            <button id="google-login-btn" class="btn-google">
+                <i class="fab fa-google" style="color: #DB4437;"></i> &nbsp; Sign in with Google
+            </button>
+            
+            <p style="margin-top: 20px; font-size: 0.8rem; color: #666;">
+                Belum punya akun? <button onclick="toggleForm()" class="toggle-btn">Daftar disini</button>
+            </p>
+        </div>
+
+        <div id="register-form" style="display: none;">
+            <h3 style="color: white; border-bottom: 1px solid #333; padding-bottom: 10px;">REGISTER</h3>
+            <form action="/register" method="POST">
+                <div class="form-group">
+                    <input type="text" name="name" required placeholder="Full Name">
+                </div>
+                <div class="form-group">
+                    <input type="email" name="email" required placeholder="Email Address">
+                </div>
+                <div class="form-group">
+                    <input type="text" name="phone" required placeholder="WhatsApp Number">
+                </div>
+                <div class="form-group">
+                    <input type="password" name="password" required placeholder="Create Password">
+                </div>
+                <button type="submit" class="btn-submit" style="background: #333; border: 1px solid #c5a059; color: #c5a059;">CREATE ACCOUNT</button>
+            </form>
+            
+            <p style="margin-top: 20px; font-size: 0.8rem; color: #666;">
+                Sudah punya akun? <button onclick="toggleForm()" class="toggle-btn">Login disini</button>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function toggleForm() {
+            var login = document.getElementById('login-form');
+            var register = document.getElementById('register-form');
+            if (login.style.display === "none") {
+                login.style.display = "block";
+                register.style.display = "none";
+            } else {
+                login.style.display = "none";
+                register.style.display = "block";
+            }
+        }
+    </script>
+
+    <script type="module">
+        // Import fungsi-fungsi penting dari server Google
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // --- PASTE KONFIGURASI ANDA DI BAWAH INI (Ganti isi kurung kurawal) ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAt-5btgHvMOo6DxYmGTnFm1Le5sFVx2YY",
+            authDomain: "dinedock-58d18.firebaseapp.com",
+            projectId: "dinedock-58d18",
+            storageBucket: "dinedock-58d18.firebasestorage.app",
+            messagingSenderId: "272487446256",
+            appId: "1:272487446256:web:849fc970475f81b5f27435",
+            measurementId: "G-BLMW045894"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
+        // Logika saat tombol Google diklik
+        document.getElementById('google-login-btn').addEventListener('click', () => {
+            
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    // 1. Login Google Berhasil
+                    const user = result.user;
+                    console.log("Google User:", user.email);
+
+                    // 2. Kirim data ke Backend Node.js kita untuk disimpan ke MySQL
+                    fetch('/auth/google', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            email: user.email,
+                            name: user.displayName,
+                            // Kita kasih nomor HP dummy dulu karena Google tidak kasih no HP
+                            phone: "0000000000" 
+                        })
+                    })
+                    .then(response => {
+                        if (response.ok) {
+                            // 3. Backend bilang OK -> Masuk Dashboard
+                            window.location.href = "/dashboard";
+                        } else {
+                            document.getElementById('error-message').style.display = 'block';
+                            document.getElementById('error-message').innerText = "Gagal sinkronisasi dengan database.";
+                        }
+                    });
+
+                }).catch((error) => {
+                    console.error("Error:", error);
+                    document.getElementById('error-message').style.display = 'block';
+                    document.getElementById('error-message').innerText = error.message;
+                });
+        });
+    </script>
+</body>
+</html>

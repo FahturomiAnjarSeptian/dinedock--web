@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Our Menu | DineDock</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Tambahan CSS untuk Pemisah Kategori */
+        .category-header {
+            text-align: center;
+            margin: 60px 0 30px 0;
+            position: relative;
+        }
+        .category-header h2 {
+            display: inline-block;
+            color: var(--gold);
+            font-family: 'Playfair Display', serif;
+            font-size: 2rem;
+            background: var(--dark-bg);
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+            margin: 0;
+        }
+        .category-header::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #333;
+            z-index: 0;
+        }
+        .sub-text {
+            color: #666; font-size: 0.9rem; margin-top: 5px; font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hero" style="height: 40vh; background-image: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1000&q=80');">
+        <div style="position: absolute; top: 20px; left: 20px;">
+            <a href="<%= user && user.userId ? '/dashboard' : '/' %>" style="...">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+        <h1 style="margin-top: 0;">OUR SIGNATURE MENU</h1>
+        <p style="color: #c5a059;">Taste the Perfection</p>
+    </div>
+
+    <div class="container">
+
+        <div class="category-header">
+            <h2>MAIN COURSE</h2>
+            <div class="sub-text">Authentic Japanese Taste</div>
+        </div>
+        <div class="menu-grid">
+            <% menus.filter(item => item.category === 'food').forEach(item => { %>
+                <div class="menu-card">
+                    <img src="<%= item.image_url %>" alt="<%= item.name %>" class="menu-img">
+                    <div class="menu-info">
+                        <h3 class="menu-title"><%= item.name %></h3>
+                        <p class="menu-desc"><%= item.description %></p>
+                        <div class="menu-price">Rp <%= item.price.toLocaleString('id-ID') %></div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+
+        <div class="category-header">
+            <h2>REFRESHMENT</h2>
+            <div class="sub-text">Thirst Quencher & Tea</div>
+        </div>
+        <div class="menu-grid">
+            <% menus.filter(item => item.category === 'beverage').forEach(item => { %>
+                <div class="menu-card">
+                    <img src="<%= item.image_url %>" alt="<%= item.name %>" class="menu-img">
+                    <div class="menu-info">
+                        <h3 class="menu-title"><%= item.name %></h3>
+                        <p class="menu-desc"><%= item.description %></p>
+                        <div class="menu-price">Rp <%= item.price.toLocaleString('id-ID') %></div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+
+        <div class="category-header">
+            <h2>DESSERT</h2>
+            <div class="sub-text">Sweet Ending</div>
+        </div>
+        <div class="menu-grid">
+            <% menus.filter(item => item.category === 'dessert').forEach(item => { %>
+                <div class="menu-card">
+                    <img src="<%= item.image_url %>" alt="<%= item.name %>" class="menu-img">
+                    <div class="menu-info">
+                        <h3 class="menu-title"><%= item.name %></h3>
+                        <p class="menu-desc"><%= item.description %></p>
+                        <div class="menu-price">Rp <%= item.price.toLocaleString('id-ID') %></div>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+
+        <div style="text-align: center; margin-top: 80px; padding: 40px; background: #222; border-radius: 10px; border: 1px dashed #444;">
+            <h2 style="color: white; margin-bottom: 10px;">Sudah tahu mau pesan apa?</h2>
+            <p style="color: #888; margin-bottom: 20px;">Segera reservasi meja Anda sebelum kehabisan.</p>
+            <a href="/" class="btn-submit" style="display: inline-block; width: auto; padding: 15px 40px; text-decoration: none; color: black;">
+                BOOK TABLE NOW
+            </a>
+        </div>
+
+    </div>
+
+</body>
+</html>

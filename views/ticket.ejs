@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Ticket | DineDock</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            background-image: url('/img/interior.jpg'); /* Background Blur */
+            background-size: cover;
+            backdrop-filter: blur(8px);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .ticket-card {
+            background: white;
+            width: 350px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0,0,0,0.5);
+            font-family: 'Courier New', Courier, monospace; /* Font struk */
+            color: #333;
+            position: relative;
+        }
+        .ticket-header {
+            background: #1a1a1a;
+            color: #c5a059;
+            padding: 20px;
+            text-align: center;
+            border-bottom: 4px solid #c5a059;
+        }
+        .ticket-body { padding: 20px; }
+        .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .label { font-weight: bold; color: #555; }
+        .value { font-weight: bold; }
+        .qr-section { text-align: center; margin-top: 20px; }
+        .qr-section img { width: 150px; }
+        .btn-home {
+            display: block; width: 100%; text-align: center; padding: 15px;
+            background: #c5a059; color: black; text-decoration: none; font-weight: bold;
+        }
+        .success-icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div class="ticket-card">
+        <div class="ticket-header">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h2 style="margin: 0; font-family: 'Playfair Display';">BOOKING CONFIRMED</h2>
+            <small>DineDock Integrated System</small>
+        </div>
+
+        <div class="ticket-body">
+            <div style="text-align: center; margin-bottom: 20px; color: #666;">
+                Tunjukkan QR Code ini kepada staff saat kedatangan.
+            </div>
+
+            <div class="info-row">
+                <span class="label">ID BOOKING</span>
+                <span class="value"><%= booking.id %></span>
+            </div>
+            <div class="info-row">
+                <span class="label">NAMA</span>
+                <span class="value"><%= booking.name %></span>
+            </div>
+            <div class="info-row">
+                <span class="label">TANGGAL</span>
+                <span class="value"><%= new Date(booking.reservation_date).toLocaleDateString('id-ID') %></span>
+            </div>
+            <div class="info-row">
+                <span class="label">JAM</span>
+                <span class="value"><%= booking.start_time %></span>
+            </div>
+
+            <div style="background: #eee; padding: 10px; border-radius: 5px; margin-top: 15px;">
+                <div class="info-row" style="border: none;">
+                    <span class="label">🍽️ MEJA</span>
+                    <span class="value" style="font-size: 1.2rem; color: #c5a059;"><%= booking.table_id %></span>
+                </div>
+                <% if (booking.parking_slot_id) { %>
+                <div class="info-row" style="border: none;">
+                    <span class="label">🚗 PARKIR</span>
+                    <span class="value" style="font-size: 1.2rem; color: #c5a059;"><%= booking.parking_slot_id %></span>
+                </div>
+                <% } else { %>
+                <div class="info-row" style="border: none;">
+                    <span class="label">🚗 PARKIR</span>
+                    <span class="value">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">STATUS PEMBAYARAN</span>
+                    <span class="value" style="color: #28a745; background: #d4edda; padding: 2px 8px; border-radius: 4px;">
+                        LUNAS (PAID)
+                    </span>
+                </div>
+                <% } %>
+            </div>
+
+            <div class="qr-section">
+                <img src="<%= qr_code %>" alt="QR Code">
+                <br>
+                <small>Scan untuk Validasi</small>
+            </div>
+        </div>
+
+        <a href="/dashboard" class="btn-home">KEMBALI KE DASHBOARD</a>
+    </div>
+    
+
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment | DineDock</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; color: #333; }
+        .payment-card {
+            background: white; width: 400px; padding: 30px; border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;
+        }
+        .timer { font-size: 1.5rem; font-weight: bold; color: #d9534f; margin: 10px 0; }
+        .qris-img { width: 200px; margin: 20px 0; border: 1px solid #ddd; padding: 10px; border-radius: 5px; }
+        .amount { font-size: 2rem; font-weight: bold; color: var(--gold); margin: 10px 0; }
+        .btn-confirm {
+            background: #28a745; color: white; width: 100%; padding: 15px; border: none;
+            font-size: 1.1rem; font-weight: bold; border-radius: 5px; cursor: pointer; transition: 0.3s;
+        }
+        .btn-confirm:hover { background: #218838; }
+    </style>
+</head>
+<body>
+
+    <div class="payment-card">
+        <h2 style="margin: 0;">Selesaikan Pembayaran</h2>
+        <p style="color: #666;">Booking Fee (DP)</p>
+        
+        <div class="amount">Rp 50.000</div>
+        
+        <div style="background: #fff3cd; padding: 10px; font-size: 0.9rem; color: #856404; border-radius: 5px;">
+            Selesaikan dalam <span id="countdown">05:00</span> menit
+        </div>
+
+        <img src="<%= qr_code %>" class="qris-img" alt="QRIS Scan">
+        
+        <p style="font-size: 0.9rem;">Scan QRIS di atas menggunakan GoPay/OVO/Dana/BCA Mobile</p>
+
+        <form id="payForm" action="/pay/confirm/<%= booking.id %>" method="POST">
+            <button type="button" onclick="confirmPayment()" class="btn-confirm">
+                <i class="fas fa-check-circle"></i> SAYA SUDAH BAYAR
+            </button>
+        </form>
+        
+        <div style="margin-top: 15px;">
+            <a href="/dashboard" style="color: #999; text-decoration: none; font-size: 0.8rem;">Batalkan Pesanan</a>
+        </div>
+    </div>
+
+    <script>
+        // Script Countdown tetap sama...
+        let time = 300; 
+        const countdownEl = document.getElementById('countdown');
+        setInterval(() => {
+            const minutes = Math.floor(time / 60);
+            let seconds = time % 60;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+            countdownEl.innerHTML = `${minutes}:${seconds}`;
+            if (time > 0) time--;
+        }, 1000);
+
+        // --- SCRIPT BARU SWEETALERT ---
+        function confirmPayment() {
+            Swal.fire({
+                title: 'Memverifikasi Pembayaran...',
+                text: 'Mohon tunggu sebentar',
+                icon: 'info',
+                timer: 2000, // Tunggu 2 detik (pura-pura ngecek bank)
+                timerProgressBar: true,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading()
+                }
+            }).then(() => {
+                // Setelah 2 detik, Munculkan Sukses
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Pembayaran Diterima!',
+                    text: 'Tiket Anda sedang diterbitkan.',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    // Submit Form secara manual
+                    document.getElementById('payForm').submit();
+                });
+            });
+        }
+    </script>
+</body>
+</body>
+</html>

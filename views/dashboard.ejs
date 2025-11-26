@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DineDock | Premium Reservation</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+    <div class="hero">
+        <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; align-items: center;">
+            <a href="/menu" style="color: #c5a059; text-decoration: none; font-weight: bold; border: 1px solid #c5a059; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
+                <i class="fas fa-book-open"></i> VIEW MENU
+            </a>
+            <span style="color: #c5a059; font-weight: bold;">
+                <i class="fas fa-user-circle"></i> Halo, <%= user.userName %>
+            </span>
+            <% if (user.role === 'admin') { %>
+                <a href="/admin" style="color: white; text-decoration: none; border: 1px solid white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem;">Admin Panel</a>
+            <% } %>
+            <a href="/logout" style="color: #ff4444; text-decoration: none; border: 1px solid #ff4444; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem;">Logout</a>
+        </div>
+
+        <h1>SEAT & SPOT</h1>
+        <p>Integrated Dining & Parking Experience</p>
+        <p style="font-size: 0.9rem; color: #c5a059; margin-top: 20px;">OPEN DAILY 10:00 - 22:00</p>
+    </div>
+    <div class="container">
+        
+        <div class="main-content">
+            
+            <div class="left-panel">
+                
+                <div style="margin-bottom: 40px;">
+                    <h2><i class="fas fa-utensils"></i> Dining Area</h2>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Silakan pilih meja yang tersedia.</p>
+                    
+                    <div class="grid-container">
+                        <% tables.forEach(table => { %>
+                            <div class="slot <%= table.status %>" 
+                                 onclick="selectSlot('table', '<%= table.id %>', this)"
+                                 data-id="<%= table.id %>">
+                                <span style="font-size: 1.2rem;"><%= table.id %></span>
+                                <small><%= table.capacity %> Pax</small>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <div>
+                    <h2><i class="fas fa-car"></i> Parking Area</h2>
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Pastikan kendaraan Anda aman dengan reservasi slot.</p>
+                    
+                    <div class="parking-title">BLOK A - VIP CAR</div>
+                    <div class="grid-container">
+                        <% mobil.forEach(slot => { %>
+                            <div class="slot <%= slot.status %>" onclick="selectSlot('parking', '<%= slot.id %>', this)">
+                                <span><%= slot.id %></span>
+                            </div>
+                        <% }) %>
+                    </div>
+
+                    <div class="parking-title" style="margin-top: 20px;">BLOK B - MOTORBIKE</div>
+                    <div class="grid-container">
+                        <% motor.forEach(slot => { %>
+                            <div class="slot <%= slot.status %>" onclick="selectSlot('parking', '<%= slot.id %>', this)">
+                                <span><%= slot.id %></span>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="right-panel">
+                <h2 style="text-align: center;">Reservation</h2>
+                
+                <form action="/book" method="POST">
+                    
+                    <div class="form-group">
+                        <label>GUEST NAME</label>
+                        <input type="text" name="name" required placeholder="Enter your full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label>EMAIL ADDRESS</label>
+                        <input type="email" name="email" required placeholder="name@example.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>WHATSAPP NUMBER</label>
+                        <input type="text" name="phone" required placeholder="+62 8...">
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>DATE</label>
+                            <input type="date" name="date" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>TIME</label>
+                            <input type="time" name="time" required>
+                        </div>
+                    </div>
+
+                    <div style="background: #111; padding: 15px; border-radius: 5px; margin-bottom: 20px; border: 1px dashed #444;">
+                        <label style="color: #888; font-size: 0.8rem;">SELECTED TABLE</label>
+                        <input type="text" id="display_table" readonly placeholder="No table selected" 
+                               style="background: transparent; border: none; color: var(--gold); font-weight: bold; font-size: 1.1rem; padding: 0;">
+                        <input type="hidden" name="table_id" id="input_table" required>
+
+                        <div style="margin-top: 10px;">
+                            <label style="cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                                <input type="checkbox" id="check_vehicle" onchange="toggleParking()" style="width: auto;"> 
+                                <span style="color: white; font-size: 0.9rem;">I bring a vehicle</span>
+                            </label>
+                        </div>
+
+                        <div id="parking_input_group" style="display: none; margin-top: 10px; border-top: 1px solid #333; paddingTop: 10px;">
+                            <label style="color: #888; font-size: 0.8rem;">SELECTED PARKING</label>
+                            <input type="text" id="display_parking" readonly placeholder="No slot selected"
+                                   style="background: transparent; border: none; color: var(--gold); font-weight: bold; font-size: 1.1rem; padding: 0;">
+                            <input type="hidden" name="parking_id" id="input_parking">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-submit">CONFIRM BOOKING</button>
+                    <p style="text-align: center; color: #555; font-size: 0.8rem; margin-top: 10px;">*T&C Apply. 90 mins duration.</p>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <div style="text-align: center; padding: 20px; color: #555; font-size: 0.8rem;">
+        &copy; 2025 DineDock Integrated System. All Rights Reserved.
+    </div>
+
+    <script>
+        function selectSlot(type, id, element) {
+            // 1. GANTI ALERT BIASA DENGAN SWEETALERT
+            if (element.classList.contains('maintenance')) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Slot Tidak Tersedia',
+                    text: 'Maaf, ' + (type === 'table' ? 'Meja' : 'Parkiran') + ' ini sudah dibooking orang lain!',
+                    confirmButtonColor: '#c5a059'
+                });
+                return;
+            }
+
+            // Logic seleksi (Tetap sama seperti sebelumnya)
+            if (type === 'table') {
+                document.querySelectorAll('.slot').forEach(el => {
+                    if(el.getAttribute('onclick')?.includes("'table'")) el.classList.remove('selected');
+                });
+                document.getElementById('display_table').value = id;
+                document.getElementById('input_table').value = id;
+            } 
+            else if (type === 'parking') {
+                if (!document.getElementById('check_vehicle').checked) {
+                    // ALERT PERINGATAN JUGA DIGANTI
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Oops...',
+                        text: 'Silakan centang "I bring a vehicle" terlebih dahulu!',
+                        confirmButtonColor: '#333'
+                    });
+                    return;
+                }
+                document.querySelectorAll('.slot').forEach(el => {
+                    if(el.getAttribute('onclick')?.includes("'parking'")) el.classList.remove('selected');
+                });
+                document.getElementById('display_parking').value = id;
+                document.getElementById('input_parking').value = id;
+            }
+            element.classList.add('selected');
+        }
+
+        function toggleParking() {
+            const isChecked = document.getElementById('check_vehicle').checked;
+            const parkingGroup = document.getElementById('parking_input_group');
+            const parkingInput = document.getElementById('input_parking');
+            
+            if (isChecked) {
+                parkingGroup.style.display = 'block';
+                parkingInput.required = true;
+            } else {
+                parkingGroup.style.display = 'none';
+                parkingInput.required = false;
+                parkingInput.value = '';
+                document.getElementById('display_parking').value = '';
+                document.querySelectorAll('.slot').forEach(el => {
+                    if(el.getAttribute('onclick')?.includes("'parking'")) el.classList.remove('selected');
+                });
+            }
+        }
+    </script>
+
+</body>
+</html>

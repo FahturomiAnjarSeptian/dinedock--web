@@ -1,0 +1,260 @@
+/* public/css/style.css - THEME: PREMIUM DARK JAPANESE */
+
+/* Import Font Mewah (Playfair Display untuk Judul, Lato untuk teks) */
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&family=Playfair+Display:wght@700&display=swap');
+
+:root {
+    --gold: #c5a059;       /* Warna Emas Sushi Tei */
+    --gold-hover: #d4af37;
+    --dark-bg: #1a1a1a;    /* Hitam Elegan */
+    --card-bg: #252525;    /* Abu Gelap */
+    --text-light: #f4f4f4;
+    --text-muted: #aaaaaa;
+    --booked: #8e2c2c;     /* Merah Gelap (Booked) */
+    --selected: #c5a059;   /* Emas (Dipilih) */
+    --available: #2d5a37;  /* Hijau Hutan (Available) */
+}
+
+body {
+    font-family: 'Lato', sans-serif;
+    background-color: var(--dark-bg);
+    color: var(--text-light);
+    margin: 0;
+    padding: 0;
+}
+
+/* --- HERO SECTION (Banner Besar) --- */
+.hero {
+    height: 60vh; /* Setengah layar lebih sedikit */
+    background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.8)), url('../img/interior.jpg'); /* Pastikan ada foto ini */
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-bottom: 4px solid var(--gold);
+}
+
+.hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem;
+    margin: 0;
+    color: var(--gold);
+    letter-spacing: 2px;
+}
+
+.hero p {
+    font-size: 1.2rem;
+    color: #ddd;
+    margin-top: 10px;
+    font-weight: 300;
+}
+
+/* --- CONTAINER UTAMA --- */
+.container {
+    max-width: 1200px;
+    margin: -50px auto 50px auto; /* Naik ke atas menimpa banner */
+    padding: 0 20px;
+    position: relative;
+    z-index: 10;
+}
+
+.main-content {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+/* --- KARTU PANEL (Card Styling) --- */
+.section-box, .right-panel {
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    border: 1px solid #333;
+}
+
+.left-panel { flex: 2; min-width: 300px; }
+.right-panel { flex: 1; min-width: 300px; height: fit-content; border-top: 4px solid var(--gold); }
+
+h2 {
+    font-family: 'Playfair Display', serif;
+    color: var(--gold);
+    margin-top: 0;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* --- GRID SYSTEM --- */
+.grid-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+/* --- SLOT STYLING (Kotak Meja/Parkir) --- */
+.slot {
+    height: 70px;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #444;
+    background: #333;
+    color: #fff;
+    position: relative;
+}
+
+.slot small { font-size: 0.7rem; color: #bbb; font-weight: normal; }
+
+.slot:hover { transform: translateY(-3px); border-color: var(--gold); }
+
+/* Status Colors */
+.slot.available { border-bottom: 3px solid var(--available); }
+.slot.available:hover { background-color: var(--available); }
+
+/* Update Warna Booked agar lebih kontras */
+.slot.maintenance { 
+    background-color: #631818; /* Merah Marun Terang (Jauh lebih terlihat dari hitam) */
+    color: #ffd1d1;            /* Teks Merah Muda Terang */
+    border: 2px solid #ff4444; /* Garis Tepi Merah Menyala */
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5); /* Efek bayangan di dalam */
+    cursor: not-allowed;
+    opacity: 1;                /* Pastikan tidak transparan */
+}
+
+.slot.maintenance::after {
+    content: 'BOOKED';         /* Tulisan BOOKED kecil */
+    position: absolute;
+    font-size: 10px;
+    color: #ff8888;
+    bottom: 5px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+.slot.selected {
+    background-color: var(--gold) !important;
+    color: #000 !important;
+    box-shadow: 0 0 15px rgba(197, 160, 89, 0.4);
+    border: none;
+    transform: scale(1.05);
+}
+.slot.selected small { color: #222; font-weight: bold; }
+
+/* --- FORM STYLING --- */
+.form-group { margin-bottom: 20px; }
+.form-group label { display: block; margin-bottom: 8px; color: var(--gold); font-size: 0.9rem; letter-spacing: 1px; }
+
+.form-group input, .form-group select { 
+    width: 90%; 
+    padding: 12px; 
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 4px;
+    font-family: 'Lato', sans-serif;
+}
+.form-group input:focus { outline: none; border-color: var(--gold); }
+
+/* Tombol Submit Keren */
+.btn-submit {
+    background: linear-gradient(45deg, var(--gold), #b89146);
+    color: #000;
+    padding: 15px;
+    width: 100%;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: 0.3s;
+    margin-top: 10px;
+}
+
+.btn-submit:hover {
+    background: #fff;
+    box-shadow: 0 0 20px rgba(197, 160, 89, 0.5);
+}
+
+/* --- PARKIR SECTION --- */
+.parking-title { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 10px; border-left: 3px solid #555; padding-left: 10px; }
+/* --- MENU GALLERY STYLES --- */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 30px;
+    padding: 20px 0;
+}
+
+.menu-card {
+    background: var(--card-bg);
+    border: 1px solid #333;
+    border-radius: 10px;
+    overflow: hidden; /* Agar gambar tidak keluar kotak */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+}
+
+.menu-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(197, 160, 89, 0.2); /* Glow Emas */
+    border-color: var(--gold);
+}
+
+.menu-img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover; /* Agar gambar tidak gepeng */
+    border-bottom: 3px solid var(--gold);
+}
+
+.menu-info {
+    padding: 20px;
+}
+
+.menu-cat {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--gold);
+    color: #000;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.menu-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--gold);
+    margin: 0 0 10px 0;
+}
+
+.menu-desc {
+    font-size: 0.9rem;
+    color: #888;
+    margin-bottom: 15px;
+    line-height: 1.4;
+    height: 40px; /* Batasi tinggi deskripsi */
+    overflow: hidden;
+}
+
+.menu-price {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #fff;
+    text-align: right;
+}

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Dashboard | DineDock</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* Layout Khusus Dashboard Admin */
+        .admin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        /* Kartu Statistik */
+        .stat-card {
+            background: #252525;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid var(--gold);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-info h3 { margin: 0; color: #888; font-size: 0.9rem; font-weight: normal; }
+        .stat-info p { margin: 5px 0 0 0; color: white; font-size: 1.5rem; font-weight: bold; }
+        .stat-icon { font-size: 2.5rem; color: #333; }
+
+        /* Container Grafik */
+        .chart-container {
+            background: #252525;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            height: 300px; /* Tinggi Grafik */
+        }
+
+        /* Table Styling */
+        table { width: 100%; border-collapse: collapse; background: #252525; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #444; color: #ddd; }
+        th { background-color: #333; color: #c5a059; }
+        tr:hover { background-color: #2a2a2a; }
+        
+        .badge { padding: 5px 10px; border-radius: 5px; font-size: 0.8rem; font-weight: bold; }
+        .bg-green { background: #155724; color: #d4edda; }
+        .bg-yellow { background: #856404; color: #fff3cd; }
+        .bg-red { background: #721c24; color: #f8d7da; }
+
+        .btn-action { padding: 5px 10px; border: none; border-radius: 3px; cursor: pointer; color: white; margin-right: 5px; }
+        .btn-checkin { background: #28a745; }
+        .btn-delete { background: #dc3545; }
+    </style>
+</head>
+<body>
+
+    <div class="hero" style="height: 25vh;">
+        <div style="position: absolute; top: 20px; right: 20px;">
+            <a href="/dashboard" style="color: white; margin-right: 20px;">Ke Dashboard</a>
+            <a href="/logout" style="color: #ff4444;">Logout</a>
+        </div>
+        <h1>ADMIN DASHBOARD</h1>
+        <p>Real-time Monitoring & Analytics</p>
+    </div>
+
+    <div class="container">
+        
+        <div class="admin-grid">
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Total Revenue</h3>
+                    <p>Rp <%= stats.revenue.toLocaleString('id-ID') %></p>
+                </div>
+                <div class="stat-icon"><i class="fas fa-wallet" style="color: #28a745;"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Total Reservations</h3>
+                    <p><%= stats.guests %> Bookings</p>
+                </div>
+                <div class="stat-icon"><i class="fas fa-users" style="color: #c5a059;"></i></div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-info">
+                    <h3>Confirmed (Paid)</h3>
+                    <p><%= stats.paid %> Transactions</p>
+                </div>
+                <div class="stat-icon"><i class="fas fa-check-circle" style="color: #007bff;"></i></div>
+            </div>
+        </div>
+
+        <div class="admin-grid">
+            <div class="chart-container">
+                <h3 style="color: white; margin-top: 0; font-size: 1rem;">Vehicle Distribution</h3>
+                <canvas id="vehicleChart"></canvas>
+            </div>
+            <div class="chart-container">
+                <h3 style="color: white; margin-top: 0; font-size: 1rem;">Payment Status</h3>
+                <canvas id="paymentChart"></canvas>
+            </div>
+        </div>
+
+        <div class="section-box" style="margin-top: 20px;">
+            <h2 style="font-size: 1.2rem;"><i class="fas fa-list"></i> Reservation Log</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Date/Time</th>
+                        <th>Table</th>
+                        <th>Parking</th>
+                        <th>Pay Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% reservations.forEach(res => { %>
+                        <tr>
+                            <td><small><%= res.id %></small></td>
+                            <td><%= res.user_name %></td>
+                            <td><%= res.reservation_date_fmt %> <br> <small><%= res.start_time %></small></td>
+                            <td><b style="color: #c5a059;"><%= res.table_id %></b></td>
+                            <td><%= res.parking_slot_id || '-' %></td>
+                            <td>
+                                <% if(res.payment_status == 'paid') { %>
+                                    <span class="badge bg-green">PAID</span>
+                                <% } else { %>
+                                    <span class="badge bg-red">UNPAID</span>
+                                <% } %>
+                            </td>
+                            <td>
+                                <% if(res.status == 'confirmed') { %>
+                                    <form action="/admin/checkin/<%= res.id %>" method="POST" style="display:inline;">
+                                        <button class="btn-action btn-checkin" title="Validasi"><i class="fas fa-check"></i></button>
+                                    </form>
+                                <% } %>
+
+                                <button type="button" class="btn-action btn-delete" onclick="confirmDelete('<%= res.id %>')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <form id="delete-form-<%= res.id %>" action="/admin/cancel/<%= res.id %>" method="POST" style="display:none;"></form>
+                            </td>
+                        </tr>
+                    <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Data dari Backend (ditaruh ke variabel JS)
+        const mobilCount = <%= stats.mobil %>;
+        const motorCount = <%= stats.motor %>;
+        const paidCount = <%= stats.paid %>;
+        const unpaidCount = <%= stats.unpaid %>;
+
+        // 1. Config Pie Chart (Kendaraan)
+        const ctxVehicle = document.getElementById('vehicleChart').getContext('2d');
+        new Chart(ctxVehicle, {
+            type: 'doughnut',
+            data: {
+                labels: ['Mobil (Car)', 'Motor (Bike)'],
+                datasets: [{
+                    data: [mobilCount, motorCount],
+                    backgroundColor: ['#c5a059', '#444'], // Emas & Abu
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: 'white' } } }
+            }
+        });
+
+        // 2. Config Bar Chart (Status Bayar)
+        const ctxPayment = document.getElementById('paymentChart').getContext('2d');
+        new Chart(ctxPayment, {
+            type: 'bar',
+            data: {
+                labels: ['Lunas (Paid)', 'Belum Bayar (Unpaid)'],
+                datasets: [{
+                    label: 'Jumlah Booking',
+                    data: [paidCount, unpaidCount],
+                    backgroundColor: ['#28a745', '#dc3545'], // Hijau & Merah
+                    barThickness: 50
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { ticks: { color: 'white', stepSize: 1 }, grid: { color: '#333' } },
+                    x: { ticks: { color: 'white' }, grid: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Script Hapus (SweetAlert)
+        function confirmDelete(bookingId) {
+            Swal.fire({
+                title: 'Hapus Data?',
+                text: "Data booking " + bookingId + " akan dihapus permanen.",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById('delete-form-' + bookingId).submit();
+                }
+            })
+        }
+    </script>
+</body>
+</html>
