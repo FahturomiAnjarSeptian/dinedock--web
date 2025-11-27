@@ -7,29 +7,82 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        /* CSS TAMBAHAN KHUSUS RESPONSIVE NAVBAR */
+        
+        /* 1. Default (Desktop): Hamburger Sembunyi */
+        .hamburger { display: none; cursor: pointer; font-size: 1.5rem; color: #c5a059; }
+        
+        /* Navbar Container */
+        .navbar-container {
+            position: absolute; top: 20px; right: 20px; z-index: 100;
+        }
+
+        /* Menu Links (Desktop) */
+        .nav-links {
+            display: flex; gap: 15px; align-items: center;
+        }
+
+        /* 2. Mode HP (Layar < 768px) */
+        @media (max-width: 768px) {
+            /* Munculkan Hamburger */
+            .hamburger { display: block; position: absolute; top: 0; right: 0; }
+            
+            /* Sembunyikan Menu (Default) & Ubah jadi Dropdown */
+            .nav-links {
+                display: none; /* Hilang dulu */
+                flex-direction: column;
+                background: rgba(0,0,0,0.95);
+                padding: 20px;
+                border-radius: 10px;
+                position: absolute;
+                top: 40px;
+                right: 0;
+                width: 200px;
+                border: 1px solid #c5a059;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            }
+
+            /* Kelas Aktif (Saat hamburger diklik) */
+            .nav-links.active { display: flex; }
+
+            /* Atur ulang tombol biar rapi di HP */
+            .nav-links a, .nav-links span {
+                width: 100%; text-align: center; margin: 0; box-sizing: border-box;
+            }
+            .hero h1 { margin-top: 60px; font-size: 2.5rem; } /* Turunkan judul biar ga ketabrak */
+        }
+    </style>
 </head>
 <body>
 
     <div class="hero">
-        <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; align-items: center;">
-            
-            <a href="/menu" style="color: #c5a059; text-decoration: none; font-weight: bold; border: 1px solid #c5a059; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
-                <i class="fas fa-book-open"></i> VIEW MENU
-            </a>
+        
+        <div class="navbar-container">
+            <div class="hamburger" onclick="toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
 
-            <a href="/history" style="color: white; text-decoration: none; font-weight: bold; border: 1px solid white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
-                <i class="fas fa-history"></i> RIWAYAT
-            </a>
+            <div class="nav-links" id="navMenu">
+                <span style="color: #c5a059; font-weight: bold; padding: 10px 0; border-bottom: 1px solid #333; margin-bottom: 10px; display: block;">
+                    <i class="fas fa-user-circle"></i> <%= user.userName %>
+                </span>
 
-            <span style="color: #c5a059; font-weight: bold;">
-                <i class="fas fa-user-circle"></i> Halo, <%= user.userName %>
-            </span>
-            
-            <% if (user.role === 'admin') { %>
-                <a href="/admin" style="color: white; text-decoration: none; border: 1px solid white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem;">Admin Panel</a>
-            <% } %>
-            
-            <a href="/logout" style="color: #ff4444; text-decoration: none; border: 1px solid #ff4444; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem;">Logout</a>
+                <a href="/menu" style="color: #c5a059; text-decoration: none; font-weight: bold; border: 1px solid #c5a059; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
+                    <i class="fas fa-book-open"></i> MENU
+                </a>
+
+                <a href="/history" style="color: white; text-decoration: none; font-weight: bold; border: 1px solid white; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
+                    <i class="fas fa-history"></i> RIWAYAT
+                </a>
+
+                <% if (user.role === 'admin') { %>
+                    <a href="/admin" style="color: white; text-decoration: none; border: 1px solid white; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem;">Admin Panel</a>
+                <% } %>
+                
+                <a href="/logout" style="color: #ff4444; text-decoration: none; border: 1px solid #ff4444; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem;">Logout</a>
+            </div>
         </div>
 
         <h1>SEAT & SPOT</h1>
@@ -38,15 +91,12 @@
     </div>
 
     <div class="container">
-        
         <div class="main-content">
             
             <div class="left-panel">
-                
                 <div style="margin-bottom: 40px;">
                     <h2><i class="fas fa-utensils"></i> Dining Area</h2>
                     <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Silakan pilih meja yang tersedia.</p>
-                    
                     <div class="grid-container">
                         <% tables.forEach(table => { %>
                             <div class="slot <%= table.status %>" 
@@ -61,8 +111,7 @@
 
                 <div>
                     <h2><i class="fas fa-car"></i> Parking Area</h2>
-                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Pastikan kendaraan Anda aman dengan reservasi slot.</p>
-                    
+                    <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Pastikan kendaraan Anda aman.</p>
                     <div class="parking-title">BLOK A - VIP CAR</div>
                     <div class="grid-container">
                         <% mobil.forEach(slot => { %>
@@ -71,7 +120,6 @@
                             </div>
                         <% }) %>
                     </div>
-
                     <div class="parking-title" style="margin-top: 20px;">BLOK B - MOTORBIKE</div>
                     <div class="grid-container">
                         <% motor.forEach(slot => { %>
@@ -81,29 +129,23 @@
                         <% }) %>
                     </div>
                 </div>
-
             </div>
 
             <div class="right-panel">
                 <h2 style="text-align: center;">Reservation</h2>
-                
                 <form action="/book" method="POST">
-                    
                     <div class="form-group">
                         <label>GUEST NAME</label>
                         <input type="text" name="name" required placeholder="Enter your full name">
                     </div>
-
                     <div class="form-group">
                         <label>EMAIL ADDRESS</label>
                         <input type="email" name="email" required placeholder="name@example.com">
                     </div>
-
                     <div class="form-group">
                         <label>WHATSAPP NUMBER</label>
                         <input type="text" name="phone" required placeholder="+62 8...">
                     </div>
-                    
                     <div style="display: flex; gap: 10px;">
                         <div class="form-group" style="flex: 1;">
                             <label>DATE</label>
@@ -140,7 +182,6 @@
                     <p style="text-align: center; color: #555; font-size: 0.8rem; margin-top: 10px;">*T&C Apply. 90 mins duration.</p>
                 </form>
             </div>
-
         </div>
     </div>
 
@@ -149,8 +190,13 @@
     </div>
 
     <script>
+        // SCRIPT TOGGLE MENU HP
+        function toggleMenu() {
+            const nav = document.getElementById('navMenu');
+            nav.classList.toggle('active');
+        }
+
         function selectSlot(type, id, element) {
-            // SweetAlert jika slot penuh
             if (element.classList.contains('maintenance')) {
                 Swal.fire({
                     icon: 'error',
