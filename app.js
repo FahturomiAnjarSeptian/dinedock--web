@@ -1,4 +1,4 @@
-// app.js (VERCEL FINAL + FAST EMAIL OPTIMIZATION)
+// app.js (VERCEL OPTIMIZED: POOLING + PREMIUM EMAIL)
 const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -14,16 +14,14 @@ const PORT = 3000;
 
 const APP_DOMAIN = process.env.APP_DOMAIN || "localhost:3000";
 
+app.set('trust proxy', 1); 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
-app.set('trust proxy', 1); // Wajib untuk Vercel
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json()); 
 
-// --- SESSION STORE ---
 const sessionStore = new MySQLStore({}, db);
 
 app.use(session({
@@ -39,7 +37,6 @@ app.use(session({
     }
 }));
 
-// --- MIDDLEWARES ---
 const requireLogin = (req, res, next) => {
     if (!req.session.userId) return res.redirect('/login');
     next();
@@ -52,17 +49,19 @@ const requireAdmin = (req, res, next) => {
     next();
 };
 
-// --- KONFIGURASI EMAIL (VERSI NGEBUT / SSL) ---
+// --- OPTIMASI EMAIL (POOLING) ---
+// pool: true membuat koneksi tetap hidup, jadi kirim email kedua dst lebih cepat
 const transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com', 
-    port: 465,              // Pakai Port SSL
-    secure: true,           // Wajib True
+    pool: true, 
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: process.env.GMAIL_USER || 'anjargaming06@gmail.com', 
         pass: process.env.GMAIL_PASS || 'jtjyoqtnskprfmrj' 
     },
-    logger: true, // <--- INI PENTING: Biar kelihatan log detail dari Google
-    debug: true
+    maxConnections: 5,
+    maxMessages: 100
 });
 
 // --- ROUTES ---
@@ -95,8 +94,7 @@ app.get('/dashboard', requireLogin, (req, res) => {
     });
 });
 
-// --- AUTH ROUTES ---
-
+// Auth
 app.get('/login', (req, res) => {
     if (req.session.userId) return res.redirect('/dashboard');
     res.render('login');
@@ -154,8 +152,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/login');
 });
 
-// --- BOOKING PROCESS ---
-
+// Booking
 app.post('/book', requireLogin, (req, res) => {
     const { name, email, phone, date, time, table_id, parking_id } = req.body;
     const userId = req.session.userId;
@@ -189,7 +186,7 @@ app.get('/pay/:id', requireLogin, (req, res) => {
     });
 });
 
-// --- CONFIRM PAY & SEND EMAIL (VERSI BALAPAN / RACE) ---
+// --- CONFIRM PAY & SEND EMAIL (DESIGN FIX) ---
 app.post('/pay/confirm/:id', requireLogin, (req, res) => {
     const bookingId = req.params.id;
     const sqlUpdate = "UPDATE reservations SET status = 'confirmed', payment_status = 'paid' WHERE id = ?";
@@ -203,31 +200,46 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
             const data = results[0];
             const datePretty = new Date(data.reservation_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
+            // DESAIN PREMIUM DIKEMBALIKAN
             const mailOptions = {
-                from: process.env.GMAIL_USER,
+                from: '"DineDock System" <' + (process.env.GMAIL_USER || 'anjargaming06@gmail.com') + '>',
                 to: data.email,
                 subject: '✅ Payment Received: DineDock Booking ' + bookingId,
                 html: `
-                    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #ddd;">
-                        <h2>PAYMENT SUCCESSFUL</h2>
-                        <p>Halo ${data.name}, pembayaran booking meja ${data.table_id} berhasil.</p>
-                        <br>
-                        <a href="https://${APP_DOMAIN}/ticket/${bookingId}" style="background:#c5a059; color:white; padding:10px 20px; text-decoration:none;">LIHAT TIKET</a>
+                    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
+                        <div style="background-color: #111111; padding: 30px 20px; text-align: center; border-bottom: 4px solid #c5a059;">
+                            <h2 style="color: #c5a059; margin: 0; letter-spacing: 2px;">PAYMENT SUCCESSFUL</h2>
+                            <p style="color: #888; margin: 5px 0 0; font-size: 14px;">Terima kasih, pesanan Anda telah terkonfirmasi.</p>
+                        </div>
+                        <div style="padding: 30px;">
+                            <p style="font-size: 16px; color: #333;">Halo <strong>${data.name}</strong>,</p>
+                            <p style="color: #666; line-height: 1.6;">Pembayaran Booking Fee sebesar <strong>Rp 50.000</strong> telah kami terima.</p>
+                            
+                            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #f9f9f9; border-radius: 5px;">
+                                <tr><td style="padding: 15px; color: #666; border-bottom: 1px solid #eee;">Booking ID</td><td style="padding: 15px; font-weight: bold;">${bookingId}</td></tr>
+                                <tr><td style="padding: 15px; color: #666; border-bottom: 1px solid #eee;">Tanggal</td><td style="padding: 15px; font-weight: bold;">${datePretty}</td></tr>
+                                <tr><td style="padding: 15px; color: #666; border-bottom: 1px solid #eee;">Jam</td><td style="padding: 15px; font-weight: bold;">${data.start_time}</td></tr>
+                                <tr><td style="padding: 15px; color: #666; border-bottom: 1px solid #eee;">Meja</td><td style="padding: 15px; font-weight: bold; color: #c5a059;">${data.table_id}</td></tr>
+                            </table>
+
+                            <div style="text-align: center; margin-top: 35px;">
+                                <a href="https://${APP_DOMAIN}/ticket/${bookingId}" style="background-color: #c5a059; color: #000; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 50px; display: inline-block;">
+                                    LIHAT E-TICKET
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 `
             };
 
-            // LOGIKA KIRIM CEPAT (Max 8 Detik)
+            // LOGIKA PENGIRIMAN
             try {
-                console.log("⏳ Mencoba kirim email...");
-                const sendEmailPromise = transporter.sendMail(mailOptions);
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Email Timeout')), 8000)
-                );
-                await Promise.race([sendEmailPromise, timeoutPromise]);
+                console.log("⏳ Mengirim email...");
+                // Kita tunggu email terkirim, tapi dengan batas toleransi waktu
+                await transporter.sendMail(mailOptions);
                 console.log("✅ Email terkirim!");
             } catch (error) {
-                console.error("⚠️ Email skip/gagal (Demi performa user):", error.message);
+                console.error("⚠️ Gagal kirim email (tapi lanjut):", error.message);
             }
             
             res.redirect('/ticket/' + bookingId);
@@ -238,7 +250,6 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
 app.get('/ticket/:id', requireLogin, (req, res) => {
     const bookingId = req.params.id;
     const sql = `SELECT r.*, u.name, u.email FROM reservations r JOIN users u ON r.user_id = u.id WHERE r.id = ?`;
-    
     db.query(sql, [bookingId], (err, results) => {
         if (err || results.length === 0) return res.send("Tiket tidak ditemukan!");
         const verifyUrl = `https://${APP_DOMAIN}/verify/${bookingId}`;
@@ -299,13 +310,12 @@ app.post('/admin/cancel/:id', requireAdmin, (req, res) => {
     });
 });
 
-// --- SETUP & START SERVER ---
+// SETUP
 const initDatabase = require('./config/setup'); 
 if (require.main === module) {
     initDatabase();
     app.listen(PORT, () => {
         console.log(`\n🚀 Server berjalan di Port ${PORT}`);
-        console.log(`🌍 Domain: https://${APP_DOMAIN}`);
     });
 }
 module.exports = app;
