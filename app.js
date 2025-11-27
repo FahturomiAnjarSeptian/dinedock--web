@@ -61,10 +61,8 @@ const transporter = nodemailer.createTransport({
         user: process.env.GMAIL_USER || 'anjargaming06@gmail.com', 
         pass: process.env.GMAIL_PASS || 'jtjyoqtnskprfmrj' 
     },
-    // Setting biar gak gampang timeout
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 10000
+    logger: true, // <--- INI PENTING: Biar kelihatan log detail dari Google
+    debug: true
 });
 
 // --- ROUTES ---
@@ -206,7 +204,7 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
             const datePretty = new Date(data.reservation_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
             const mailOptions = {
-                from: '"DineDock System" <anjargaming06@gmail.com>',
+                from: process.env.GMAIL_USER,
                 to: data.email,
                 subject: '✅ Payment Received: DineDock Booking ' + bookingId,
                 html: `
