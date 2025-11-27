@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My History | DineDock</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* CSS KHUSUS HISTORY */
+        body { background: #111; color: white; }
+        
+        .history-container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .history-card {
+            background: #222;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+        .history-card:hover { border-color: var(--gold); transform: translateX(5px); }
+
+        .card-info h3 { margin: 0 0 5px 0; color: var(--gold); font-family: 'Playfair Display'; }
+        .card-info p { margin: 0; color: #aaa; font-size: 0.9rem; }
+        
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .bg-paid { background: rgba(40, 167, 69, 0.2); color: #28a745; border: 1px solid #28a745; }
+        .bg-pending { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid #ffc107; }
+        .bg-cancel { background: rgba(220, 53, 69, 0.2); color: #dc3545; border: 1px solid #dc3545; }
+
+        .btn-view {
+            text-decoration: none;
+            background: #333;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+        .btn-view:hover { background: var(--gold); color: black; }
+
+        /* Responsif HP */
+        @media (max-width: 600px) {
+            .history-card { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .btn-view { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <div style="padding: 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center;">
+        <a href="/dashboard" style="color: white; text-decoration: none; font-weight: bold;">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+        <span style="color: var(--gold); font-family: 'Playfair Display'; font-size: 1.2rem;">Riwayat Pesanan</span>
+    </div>
+
+    <div class="history-container">
+        
+        <% if (bookings.length === 0) { %>
+            <div style="text-align: center; margin-top: 50px; color: #555;">
+                <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                <p>Belum ada riwayat pemesanan.</p>
+                <a href="/dashboard" style="color: var(--gold);">Pesan Sekarang</a>
+            </div>
+        <% } %>
+
+        <% bookings.forEach(book => { %>
+            <div class="history-card">
+                <div class="card-info">
+                    <h3>ID: <%= book.id %></h3>
+                    <p>
+                        <i class="far fa-calendar-alt"></i> <%= new Date(book.reservation_date).toLocaleDateString() %> &nbsp;|&nbsp; 
+                        <i class="far fa-clock"></i> <%= book.start_time %>
+                    </p>
+                    <p style="margin-top: 5px;">
+                        Meja: <b style="color: white;"><%= book.table_id %></b> 
+                        <% if(book.parking_slot_id) { %> | Parkir: <b style="color: white;"><%= book.parking_slot_id %></b> <% } %>
+                    </p>
+                </div>
+
+                <div style="text-align: right; display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                    <% if (book.status == 'confirmed' || book.status == 'paid') { %>
+                        <span class="status-badge bg-paid">Confirmed (Lunas)</span>
+                        <a href="/ticket/<%= book.id %>" class="btn-view">Lihat Tiket</a>
+                    
+                    <% } else if (book.status == 'pending' || book.payment_status == 'unpaid') { %>
+                        <span class="status-badge bg-pending">Menunggu Bayar</span>
+                        <a href="/pay/<%= book.id %>" class="btn-view" style="background: #ffc107; color: black;">Bayar Sekarang</a>
+                    
+                    <% } else if (book.status == 'checked_in') { %>
+                        <span class="status-badge bg-paid" style="border-color: white; color: white;">Selesai</span>
+                    
+                    <% } else { %>
+                        <span class="status-badge bg-cancel">Dibatalkan</span>
+                    <% } %>
+                </div>
+            </div>
+        <% }) %>
+
+    </div>
+
+</body>
+</html>

@@ -93,7 +93,25 @@ app.get('/dashboard', requireLogin, (req, res) => {
         });
     });
 });
+// --- ROUTE HISTORY (RIWAYAT) ---
+app.get('/history', requireLogin, (req, res) => {
+    const userId = req.session.userId;
+    
+    // Ambil semua reservasi milik user ini, urutkan dari yang terbaru
+    const sql = `SELECT * FROM reservations 
+                 WHERE user_id = ? 
+                 ORDER BY created_at DESC`;
 
+    db.query(sql, [userId], (err, results) => {
+        if (err) throw err;
+        
+        // Render halaman history
+        res.render('history', { 
+            bookings: results, 
+            user: req.session 
+        });
+    });
+});
 // Auth
 app.get('/login', (req, res) => {
     if (req.session.userId) return res.redirect('/dashboard');

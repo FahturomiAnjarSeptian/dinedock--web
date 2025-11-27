@@ -12,15 +12,23 @@
 
     <div class="hero">
         <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; align-items: center;">
+            
             <a href="/menu" style="color: #c5a059; text-decoration: none; font-weight: bold; border: 1px solid #c5a059; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
                 <i class="fas fa-book-open"></i> VIEW MENU
             </a>
+
+            <a href="/history" style="color: white; text-decoration: none; font-weight: bold; border: 1px solid white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
+                <i class="fas fa-history"></i> RIWAYAT
+            </a>
+
             <span style="color: #c5a059; font-weight: bold;">
                 <i class="fas fa-user-circle"></i> Halo, <%= user.userName %>
             </span>
+            
             <% if (user.role === 'admin') { %>
                 <a href="/admin" style="color: white; text-decoration: none; border: 1px solid white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem;">Admin Panel</a>
             <% } %>
+            
             <a href="/logout" style="color: #ff4444; text-decoration: none; border: 1px solid #ff4444; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem;">Logout</a>
         </div>
 
@@ -28,6 +36,7 @@
         <p>Integrated Dining & Parking Experience</p>
         <p style="font-size: 0.9rem; color: #c5a059; margin-top: 20px;">OPEN DAILY 10:00 - 22:00</p>
     </div>
+
     <div class="container">
         
         <div class="main-content">
@@ -141,7 +150,7 @@
 
     <script>
         function selectSlot(type, id, element) {
-            // 1. GANTI ALERT BIASA DENGAN SWEETALERT
+            // SweetAlert jika slot penuh
             if (element.classList.contains('maintenance')) {
                 Swal.fire({
                     icon: 'error',
@@ -152,7 +161,6 @@
                 return;
             }
 
-            // Logic seleksi (Tetap sama seperti sebelumnya)
             if (type === 'table') {
                 document.querySelectorAll('.slot').forEach(el => {
                     if(el.getAttribute('onclick')?.includes("'table'")) el.classList.remove('selected');
@@ -162,7 +170,6 @@
             } 
             else if (type === 'parking') {
                 if (!document.getElementById('check_vehicle').checked) {
-                    // ALERT PERINGATAN JUGA DIGANTI
                     Swal.fire({
                         icon: 'warning',
                         title: 'Oops...',
