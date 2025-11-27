@@ -1,5 +1,5 @@
-// app.js (VERCEL FINAL FIXED VERSION)
-const path = require('path'); // WAJIB ADA untuk Vercel
+// app.js (VERCEL FINAL + FAST EMAIL OPTIMIZATION)
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -12,22 +12,18 @@ const MySQLStore = require('express-mysql-session')(session);
 const app = express();
 const PORT = 3000;
 
-// Set Domain: Ambil dari Environment Vercel, kalau tidak ada pakai localhost
 const APP_DOMAIN = process.env.APP_DOMAIN || "localhost:3000";
 
 app.set('view engine', 'ejs');
-
-// PERBAIKAN 1: Gunakan path.join untuk folder views (Agar Vercel menemukannya)
 app.set('views', path.join(__dirname, 'views'));
 
 // Middleware
+app.set('trust proxy', 1); // Wajib untuk Vercel
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// PERBAIKAN 2: Gunakan path.join untuk folder public
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json()); 
 
-// --- SESSION STORE (Database Session) ---
+// --- SESSION STORE ---
 const sessionStore = new MySQLStore({}, db);
 
 app.use(session({
@@ -37,8 +33,9 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: { 
-        secure: false, 
-        maxAge: 3600000 
+        secure: true, 
+        maxAge: 3600000,
+        sameSite: 'none'
     }
 }));
 
@@ -55,13 +52,19 @@ const requireAdmin = (req, res, next) => {
     next();
 };
 
-// --- CONFIG EMAIL ---
+// --- KONFIGURASI EMAIL (VERSI NGEBUT / SSL) ---
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com', 
+    port: 465,              // Pakai Port SSL
+    secure: true,           // Wajib True
     auth: {
         user: process.env.GMAIL_USER || 'anjargaming06@gmail.com', 
         pass: process.env.GMAIL_PASS || 'jtjyoqtnskprfmrj' 
-    }
+    },
+    // Setting biar gak gampang timeout
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 10000
 });
 
 // --- ROUTES ---
@@ -104,14 +107,14 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
     const { email, password } = req.body;
     db.query('SELECT * FROM users WHERE email = ?', [email], (err, results) => {
-        if (err) throw err;
+        if (err) { console.error(err); return res.render('login', { error: 'DB Error' }); }
         if (results.length === 0 || !bcrypt.compareSync(password, results[0].password)) {
             return res.render('login', { error: 'Email atau Password Salah!' });
         }
         req.session.userId = results[0].id;
         req.session.userName = results[0].name;
         req.session.role = results[0].role;
-        res.redirect('/dashboard');
+        req.session.save(err => { res.redirect('/dashboard'); });
     });
 });
 
@@ -133,7 +136,7 @@ app.post('/auth/google', (req, res) => {
             req.session.userId = results[0].id;
             req.session.userName = results[0].name;
             req.session.role = results[0].role;
-            return res.sendStatus(200);
+            req.session.save(err => { res.sendStatus(200); });
         } else {
             const dummyPassword = bcrypt.hashSync("GOOGLE_ACCESS_TOKEN", 10);
             const sqlInsert = "INSERT INTO users (name, email, phone, password, role) VALUES (?, ?, ?, ?, 'customer')";
@@ -142,7 +145,7 @@ app.post('/auth/google', (req, res) => {
                 req.session.userId = result.insertId;
                 req.session.userName = name;
                 req.session.role = 'customer';
-                return res.sendStatus(200);
+                req.session.save(err => { res.sendStatus(200); });
             });
         }
     });
@@ -188,6 +191,7 @@ app.get('/pay/:id', requireLogin, (req, res) => {
     });
 });
 
+// --- CONFIRM PAY & SEND EMAIL (VERSI BALAPAN / RACE) ---
 app.post('/pay/confirm/:id', requireLogin, (req, res) => {
     const bookingId = req.params.id;
     const sqlUpdate = "UPDATE reservations SET status = 'confirmed', payment_status = 'paid' WHERE id = ?";
@@ -210,18 +214,24 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
                         <h2>PAYMENT SUCCESSFUL</h2>
                         <p>Halo ${data.name}, pembayaran booking meja ${data.table_id} berhasil.</p>
                         <br>
-                        <a href="https://${APP_DOMAIN}/ticket/${bookingId}" style="background:#c5a059; color:white; padding:10px 20px; text-decoration:none;">
-                            LIHAT E-TICKET
-                        </a>
+                        <a href="https://${APP_DOMAIN}/ticket/${bookingId}" style="background:#c5a059; color:white; padding:10px 20px; text-decoration:none;">LIHAT TIKET</a>
                     </div>
                 `
             };
 
+            // LOGIKA KIRIM CEPAT (Max 8 Detik)
             try {
-                await transporter.sendMail(mailOptions);
+                console.log("⏳ Mencoba kirim email...");
+                const sendEmailPromise = transporter.sendMail(mailOptions);
+                const timeoutPromise = new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Email Timeout')), 8000)
+                );
+                await Promise.race([sendEmailPromise, timeoutPromise]);
+                console.log("✅ Email terkirim!");
             } catch (error) {
-                console.error("Gagal kirim email:", error);
+                console.error("⚠️ Email skip/gagal (Demi performa user):", error.message);
             }
+            
             res.redirect('/ticket/' + bookingId);
         });
     });
@@ -243,7 +253,6 @@ app.get('/ticket/:id', requireLogin, (req, res) => {
 app.get('/verify/:id', (req, res) => {
     const bookingId = req.params.id;
     const sql = `SELECT r.*, u.name FROM reservations r JOIN users u ON r.user_id = u.id WHERE r.id = ?`;
-
     db.query(sql, [bookingId], (err, results) => {
         if (err || results.length === 0) return res.send("<h1>❌ QR Code Tidak Dikenali</h1>");
         res.render('verify', { booking: results[0], user: req.session.userId ? req.session : null });
@@ -266,7 +275,6 @@ app.get('/admin', requireAdmin, (req, res) => {
         });
         const unpaidCount = results.filter(r => r.payment_status === 'unpaid').length;
         const paidCount = paidBookings.length;
-
         res.render('admin', { 
             reservations: results,
             stats: { revenue: totalRevenue, guests: totalGuests, mobil: mobilCount, motor: motorCount, paid: paidCount, unpaid: unpaidCount }
@@ -293,10 +301,8 @@ app.post('/admin/cancel/:id', requireAdmin, (req, res) => {
     });
 });
 
-// --- PERBAIKAN 3: SETUP & START SERVER YANG BENAR ---
+// --- SETUP & START SERVER ---
 const initDatabase = require('./config/setup'); 
-
-// Jalankan initDB hanya jika dijalankan manual (Local), BUKAN di Vercel
 if (require.main === module) {
     initDatabase();
     app.listen(PORT, () => {
@@ -304,6 +310,4 @@ if (require.main === module) {
         console.log(`🌍 Domain: https://${APP_DOMAIN}`);
     });
 }
-
-// Export app untuk Vercel (WAJIB)
 module.exports = app;
