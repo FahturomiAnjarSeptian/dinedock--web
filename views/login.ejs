@@ -14,6 +14,8 @@
             align-items: center;
             background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.9)), url('/img/restaurant.jpg');
             background-size: cover;
+            font-family: sans-serif;
+            margin: 0;
         }
         .login-card {
             background: rgba(20, 20, 20, 0.95);
@@ -24,24 +26,84 @@
             max-width: 400px;
             border-top: 4px solid #c5a059;
             text-align: center;
+            position: relative;
         }
-        .toggle-btn {
-            background: none; border: none; color: #c5a059; cursor: pointer; text-decoration: underline; font-size: 0.9rem;
+        
+        .btn-close {
+            position: absolute; top: 15px; right: 15px; color: #666; font-size: 1.2rem; text-decoration: none; transition: 0.3s;
         }
-        /* Tombol Google */
+        .btn-close:hover { color: #ff4444; transform: scale(1.1); }
+
+        /* --- PERBAIKAN TOTAL LAYOUT (WADAH SERAGAM) --- */
+
+        /* 1. SEMUA WADAH FORM (Email & Password) DISET SAMA */
+        .form-group { 
+            width: 90%;           /* Lebar wadah 90% dari kartu */
+            margin: 0 auto 20px;  /* Rata Tengah (auto kiri-kanan), Jarak bawah 20px */
+            display: block;       /* Pastikan block agar margin auto jalan */
+            position: relative;   /* Untuk posisi icon mata */
+        }
+
+        /* 2. SEMUA INPUT MEMENUHI WADAHNYA (100%) */
+        .form-group input { 
+            width: 100%;          /* Penuhi wadah 90% tadi */
+            padding: 12px;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 4px;
+            box-sizing: border-box; /* WAJIB: Agar padding tidak bikin melebar */
+        }
+
+        /* 3. KHUSUS PASSWORD */
+        /* Kita timpa style input password agar ada ruang untuk mata */
+        .password-wrapper input {
+            padding-right: 40px; 
+        }
+
+        /* ICON MATA (Posisi Absolute terhadap form-group) */
+        .eye-icon {
+            position: absolute;
+            right: 15px;      /* Jarak dari kanan */
+            top: 50%;         /* Tengah vertikal */
+            transform: translateY(-50%);
+            color: #888;
+            cursor: pointer;
+            z-index: 10;
+        }
+        .eye-icon:hover { color: #c5a059; }
+
+        /* --- BUTTONS --- */
+        .btn-submit {
+            background: linear-gradient(45deg, #c5a059, #b89146);
+            color: #000; 
+            width: 90%;       /* Samakan 90% */
+            padding: 12px; 
+            border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px;
+            transition: 0.3s;
+        }
+        .btn-submit:hover { filter: brightness(1.1); }
+
         .btn-google {
-            background: white; color: #333; width: 100%; padding: 12px;
-            border: none; border-radius: 4px; font-weight: bold; margin-bottom: 15px; cursor: pointer;
+            background: white; color: #333; 
+            width: 90%;       /* Samakan 90% */
+            padding: 12px; border: none; border-radius: 4px; font-weight: bold; margin: 0 auto 15px auto; cursor: pointer;
             display: flex; align-items: center; justify-content: center; gap: 10px;
-            transition: 0.2s;
         }
         .btn-google:hover { background: #f1f1f1; }
-        .divider { margin: 20px 0; color: #666; font-size: 0.8rem; }
+
+        /* LAIN-LAIN */
+        .toggle-btn { background: none; border: none; color: #c5a059; cursor: pointer; text-decoration: underline; font-size: 0.9rem; }
+        .divider { width: 90%; margin: 20px auto; color: #666; font-size: 0.8rem; display: flex; align-items: center; }
+        .divider hr { flex: 1; border: 0; border-top: 1px solid #444; }
+        .divider span { padding: 0 10px; }
     </style>
 </head>
 <body>
 
     <div class="login-card">
+        <a href="/" class="btn-close" title="Kembali ke Beranda"><i class="fas fa-times"></i></a>
+
         <h1 style="color: #c5a059; font-family: 'Playfair Display', serif; margin-bottom: 5px;">DineDock</h1>
         <p style="color: #888; margin-bottom: 30px; font-size: 0.9rem;">Integrated Reservation System</p>
 
@@ -52,21 +114,23 @@
         <% } %>
 
         <div id="login-form">
+            <h3 style="color: white; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top:0;">LOGIN</h3>
             
             <form action="/login" method="POST">
                 <div class="form-group">
                     <input type="email" name="email" required placeholder="Email Address">
                 </div>
-                <div class="form-group">
-                    <input type="password" name="password" required placeholder="Password">
+                
+                <div class="form-group password-wrapper">
+                    <input type="password" name="password" id="login-pass" required placeholder="Password">
+                    <i class="fas fa-eye eye-icon" onclick="togglePassword('login-pass', this)"></i>
                 </div>
+
                 <button type="submit" class="btn-submit">ENTER SYSTEM</button>
             </form>
 
-            <div style="display: flex; align-items: center; margin: 20px 0; color: #666; font-size: 0.8rem;">
-                <hr style="flex: 1; border: 0; border-top: 1px solid #444;">
-                <span style="padding: 0 10px;">OR</span>
-                <hr style="flex: 1; border: 0; border-top: 1px solid #444;">
+            <div class="divider">
+                <hr><span>OR</span><hr>
             </div>
 
             <button id="google-login-btn" class="btn-google">
@@ -79,7 +143,7 @@
         </div>
 
         <div id="register-form" style="display: none;">
-            <h3 style="color: white; border-bottom: 1px solid #333; padding-bottom: 10px;">REGISTER</h3>
+            <h3 style="color: white; border-bottom: 1px solid #333; padding-bottom: 10px; margin-top:0;">REGISTER</h3>
             <form action="/register" method="POST">
                 <div class="form-group">
                     <input type="text" name="name" required placeholder="Full Name">
@@ -90,9 +154,12 @@
                 <div class="form-group">
                     <input type="text" name="phone" required placeholder="WhatsApp Number">
                 </div>
-                <div class="form-group">
-                    <input type="password" name="password" required placeholder="Create Password">
+                
+                <div class="form-group password-wrapper">
+                    <input type="password" name="password" id="reg-pass" required placeholder="Create Password">
+                    <i class="fas fa-eye eye-icon" onclick="togglePassword('reg-pass', this)"></i>
                 </div>
+
                 <button type="submit" class="btn-submit" style="background: #333; border: 1px solid #c5a059; color: #c5a059;">CREATE ACCOUNT</button>
             </form>
             
@@ -103,6 +170,7 @@
     </div>
 
     <script>
+        // 1. Logic Pindah Form
         function toggleForm() {
             var login = document.getElementById('login-form');
             var register = document.getElementById('register-form');
@@ -114,14 +182,27 @@
                 register.style.display = "block";
             }
         }
+
+        // 2. Logic Toggle Password (Mata)
+        function togglePassword(inputId, icon) {
+            const input = document.getElementById(inputId);
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash"); // Ganti ikon jadi mata dicoret
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
     </script>
 
     <script type="module">
-        // Import fungsi-fungsi penting dari server Google
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
-        // --- PASTE KONFIGURASI ANDA DI BAWAH INI (Ganti isi kurung kurawal) ---
+        // --- PASTE FIREBASE CONFIG DI SINI ---
         const firebaseConfig = {
             apiKey: "AIzaSyAt-5btgHvMOo6DxYmGTnFm1Le5sFVx2YY",
             authDomain: "dinedock-58d18.firebaseapp.com",
@@ -131,46 +212,33 @@
             appId: "1:272487446256:web:849fc970475f81b5f27435",
             measurementId: "G-BLMW045894"
         };
-
-        // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // Logika saat tombol Google diklik
         document.getElementById('google-login-btn').addEventListener('click', () => {
-            
             signInWithPopup(auth, provider)
                 .then((result) => {
-                    // 1. Login Google Berhasil
                     const user = result.user;
-                    console.log("Google User:", user.email);
-
-                    // 2. Kirim data ke Backend Node.js kita untuk disimpan ke MySQL
                     fetch('/auth/google', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             email: user.email,
                             name: user.displayName,
-                            // Kita kasih nomor HP dummy dulu karena Google tidak kasih no HP
                             phone: "0000000000" 
                         })
                     })
                     .then(response => {
                         if (response.ok) {
-                            // 3. Backend bilang OK -> Masuk Dashboard
                             window.location.href = "/dashboard";
                         } else {
                             document.getElementById('error-message').style.display = 'block';
-                            document.getElementById('error-message').innerText = "Gagal sinkronisasi dengan database.";
+                            document.getElementById('error-message').innerText = "Gagal sinkronisasi database.";
                         }
                     });
-
                 }).catch((error) => {
-                    console.error("Error:", error);
-                    document.getElementById('error-message').style.display = 'block';
-                    document.getElementById('error-message').innerText = error.message;
+                    console.error(error);
                 });
         });
     </script>

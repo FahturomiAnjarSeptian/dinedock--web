@@ -258,3 +258,75 @@ h2 {
     color: #fff;
     text-align: right;
 }
+/* --- MOBILE RESPONSIVE (HP) --- */
+@media (max-width: 768px) {
+    
+    /* 1. Container agar tidak mepet pinggir HP */
+    .container {
+        padding: 0 15px;
+        margin-top: -30px; /* Naikkan dikit biar rapi */
+    }
+
+    /* 2. Hero Section (Judul jangan kegedean) */
+    .hero h1, .landing-hero h1 {
+        font-size: 2.5rem !important; /* Kecilin dari 4.5rem */
+    }
+    .landing-hero p {
+        font-size: 1rem !important;
+        padding: 0 20px;
+    }
+    .landing-hero {
+        height: 70vh; /* Jangan full layar banget di HP */
+    }
+
+    /* 3. Layout Jadi Memanjang ke Bawah (Stack) */
+    .main-content, .showcase, .footer-content {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    /* 4. Panel Kiri & Kanan jadi Full Width */
+    .left-panel, .right-panel, .showcase-item, .footer-col {
+        width: 100%;
+        min-width: auto; /* Reset min-width */
+    }
+
+    /* 5. Denah Meja & Parkir (Biar jari enak ngetap) */
+    .grid-container {
+        grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); /* Kotak agak gedean dikit */
+        gap: 10px;
+    }
+    .slot {
+        height: 60px; /* Kotak lebih tinggi biar gampang disentuh */
+    }
+
+    /* 6. Form Login & Payment */
+    .login-card, .payment-card, .ticket-card {
+        width: 90% !important; /* Jangan fix pixel, tapi persen */
+        padding: 20px;
+    }
+
+    /* 7. Navbar (Biar muat) */
+    .landing-hero .btn-cta {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+    }
+
+    /* 8. Tabel Admin (Biar bisa digeser kanan-kiri) */
+    .section-box {
+        overflow-x: auto; /* Scroll samping */
+    }
+    table {
+        min-width: 600px; /* Paksa lebar biar nggak gepeng */
+    }
+    
+    /* 9. Tombol Navigasi */
+    div[style*="position: absolute"] {
+        width: 100%;
+        padding: 15px !important;
+        flex-direction: column; /* Tombol tumpuk ke bawah */
+        gap: 10px;
+        position: relative !important; /* Jangan nempel di atas gambar */
+        background: #111; /* Kasih background biar kebaca */
+    }
+}

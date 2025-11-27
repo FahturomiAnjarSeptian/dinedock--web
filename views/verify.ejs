@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Tiket</title>
+    <style>
+        body { background: #f4f4f4; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
+        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 90%; }
+        h1 { color: #28a745; margin: 0; font-size: 2rem; }
+        .icon { font-size: 5rem; margin-bottom: 20px; }
+        p { color: #555; font-size: 1.2rem; }
+        .details { background: #eee; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <% if (booking.status == 'confirmed' || booking.status == 'paid') { %>
+            <div class="icon">✅</div>
+            <h1>TIKET VALID</h1>
+            <p>Silakan Masuk</p>
+        <% } else if (booking.status == 'checked_in') { %>
+            <div class="icon">⚠️</div>
+            <h1 style="color: orange;">SUDAH TERPAKAI</h1>
+            <p>Tamu ini sudah Check-in sebelumnya.</p>
+        <% } else { %>
+            <div class="icon">❌</div>
+            <h1 style="color: red;">TIDAK VALID</h1>
+            <p>Tiket ini sudah dibatalkan atau tidak ditemukan.</p>
+        <% } %>
+
+        <div class="details">
+            <strong>ID:</strong> <%= booking.id %><br>
+            <strong>Nama:</strong> <%= booking.name %><br>
+            <strong>Meja:</strong> <%= booking.table_id %>
+        </div>
+        
+        <% if (user && user.role == 'admin' && booking.status == 'confirmed') { %>
+            <form action="/admin/checkin/<%= booking.id %>" method="POST" style="margin-top: 20px;">
+                <button style="background: #28a745; color: white; border: none; padding: 15px; width: 100%; font-size: 1rem; border-radius: 5px; cursor: pointer;">
+                    SETUJU MASUK (CHECK-IN)
+                </button>
+            </form>
+        <% } %>
+    </div>
+</body>
+</html>
