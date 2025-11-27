@@ -1,5 +1,5 @@
-// app.js (VERCEL READY - VS CODE VERSION)
-const path = require('path');
+// app.js (VERCEL FINAL FIXED VERSION)
+const path = require('path'); // WAJIB ADA untuk Vercel
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -7,39 +7,38 @@ const bcrypt = require('bcryptjs');
 const db = require('./config/database'); 
 const qrcode = require('qrcode'); 
 const nodemailer = require('nodemailer');
-// Library baru untuk simpan session di MySQL
 const MySQLStore = require('express-mysql-session')(session);
 
 const app = express();
 const PORT = 3000;
 
+// Set Domain: Ambil dari Environment Vercel, kalau tidak ada pakai localhost
 const APP_DOMAIN = process.env.APP_DOMAIN || "localhost:3000";
 
 app.set('view engine', 'ejs');
 
-// GANTI BARIS INI:
-// app.set('views', './views'); 
-
-// MENJADI INI (Agar Vercel bisa menemukannya):
+// PERBAIKAN 1: Gunakan path.join untuk folder views (Agar Vercel menemukannya)
 app.set('views', path.join(__dirname, 'views'));
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static('public'));
+
+// PERBAIKAN 2: Gunakan path.join untuk folder public
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json()); 
 
-// --- SESSION STORE (PENTING UNTUK VERCEL) ---
-const sessionStore = new MySQLStore({}, db); // Pakai koneksi db yang sudah ada
+// --- SESSION STORE (Database Session) ---
+const sessionStore = new MySQLStore({}, db);
 
 app.use(session({
     key: 'session_cookie_name',
     secret: process.env.SESSION_SECRET || 'rahasia_default',
-    store: sessionStore, // Simpan session di MySQL Aiven
+    store: sessionStore,
     resave: false,
     saveUninitialized: false,
     cookie: { 
         secure: false, 
-        maxAge: 3600000 // 1 Jam
+        maxAge: 3600000 
     }
 }));
 
@@ -56,7 +55,7 @@ const requireAdmin = (req, res, next) => {
     next();
 };
 
-// --- KONFIGURASI EMAIL ---
+// --- CONFIG EMAIL ---
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -189,7 +188,6 @@ app.get('/pay/:id', requireLogin, (req, res) => {
     });
 });
 
-// --- CONFIRM PAY & SEND EMAIL (ASYNC) ---
 app.post('/pay/confirm/:id', requireLogin, (req, res) => {
     const bookingId = req.params.id;
     const sqlUpdate = "UPDATE reservations SET status = 'confirmed', payment_status = 'paid' WHERE id = ?";
@@ -229,8 +227,6 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
     });
 });
 
-// --- TICKET & QR VERIFICATION ---
-
 app.get('/ticket/:id', requireLogin, (req, res) => {
     const bookingId = req.params.id;
     const sql = `SELECT r.*, u.name, u.email FROM reservations r JOIN users u ON r.user_id = u.id WHERE r.id = ?`;
@@ -254,13 +250,10 @@ app.get('/verify/:id', (req, res) => {
     });
 });
 
-// --- ADMIN ROUTES ---
-
 app.get('/admin', requireAdmin, (req, res) => {
     const sql = `SELECT r.*, u.name as user_name, u.phone as user_phone, DATE_FORMAT(r.reservation_date, '%d-%m-%Y') as reservation_date_fmt FROM reservations r JOIN users u ON r.user_id = u.id ORDER BY r.created_at DESC`;
     db.query(sql, (err, results) => {
         if (err) throw err;
-        // Hitung Statistik sederhana
         const paidBookings = results.filter(r => r.payment_status === 'paid');
         const totalRevenue = paidBookings.length * 50000;
         const totalGuests = results.length;
@@ -300,7 +293,7 @@ app.post('/admin/cancel/:id', requireAdmin, (req, res) => {
     });
 });
 
-// --- SETUP & START SERVER (VERCEL COMPATIBLE) ---
+// --- PERBAIKAN 3: SETUP & START SERVER YANG BENAR ---
 const initDatabase = require('./config/setup'); 
 
 // Jalankan initDB hanya jika dijalankan manual (Local), BUKAN di Vercel
