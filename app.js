@@ -1,4 +1,5 @@
 // app.js (VERCEL READY - VS CODE VERSION)
+const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
@@ -12,12 +13,15 @@ const MySQLStore = require('express-mysql-session')(session);
 const app = express();
 const PORT = 3000;
 
-// --- DOMAIN SETTING ---
-// Nanti di Dashboard Vercel kita set 'APP_DOMAIN'
 const APP_DOMAIN = process.env.APP_DOMAIN || "localhost:3000";
 
 app.set('view engine', 'ejs');
-app.set('views', './views');
+
+// GANTI BARIS INI:
+// app.set('views', './views'); 
+
+// MENJADI INI (Agar Vercel bisa menemukannya):
+app.set('views', path.join(__dirname, 'views'));
 
 // Middleware
 app.use(bodyParser.urlencoded({ extended: true }));
