@@ -3,45 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verifikasi Tiket</title>
+    <title>Verifikasi Tiket | DineDock</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { background: #f4f4f4; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; text-align: center; }
-        .card { background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); max-width: 90%; }
-        h1 { color: #28a745; margin: 0; font-size: 2rem; }
-        .icon { font-size: 5rem; margin-bottom: 20px; }
-        p { color: #555; font-size: 1.2rem; }
-        .details { background: #eee; padding: 15px; border-radius: 10px; margin-top: 20px; text-align: left; }
+        body {
+            background: #e0e2e5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .verify-card {
+            background: white;
+            width: 100%;
+            max-width: 380px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* HEADER STATUS */
+        .status-header {
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+        
+        /* Animasi Icon */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .icon-box {
+            font-size: 5rem;
+            margin-bottom: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        .status-title { font-size: 2.2rem; font-weight: 800; margin: 0; letter-spacing: 2px; }
+        .status-desc { font-size: 1rem; opacity: 0.9; margin-top: 5px; }
+
+        /* WARNA STATUS */
+        .bg-valid { background: linear-gradient(135deg, #28a745, #218838); }
+        .bg-used { background: linear-gradient(135deg, #ffc107, #e0a800); color: #333 !important; }
+        .bg-invalid { background: linear-gradient(135deg, #dc3545, #c82333); }
+
+        /* DETAIL BOOKING */
+        .ticket-body { padding: 25px; }
+
+        .info-group { margin-bottom: 20px; }
+        .label { font-size: 0.8rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-size: 1.1rem; font-weight: 600; color: #333; margin-top: 3px; }
+
+        /* KOTAK SLOT (MEJA & PARKIR) */
+        .slot-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px dashed #ccc;
+        }
+        .slot-box { flex: 1; text-align: center; }
+        .slot-icon { color: #c5a059; font-size: 1.2rem; margin-bottom: 5px; }
+        .slot-val { font-size: 1.5rem; font-weight: 800; color: #333; }
+
+        /* TOMBOL ADMIN */
+        .admin-section {
+            padding: 20px;
+            background: #f1f1f1;
+            border-top: 1px solid #ddd;
+        }
+        .btn-action {
+            width: 100%;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            background: #111;
+            color: #c5a059;
+            transition: 0.3s;
+        }
+        .btn-action:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+
     </style>
 </head>
 <body>
-    <div class="card">
+
+    <div class="verify-card">
+
         <% if (booking.status == 'confirmed' || booking.status == 'paid') { %>
-            <div class="icon">✅</div>
-            <h1>TIKET VALID</h1>
-            <p>Silakan Masuk</p>
+            <div class="status-header bg-valid">
+                <div class="icon-box"><i class="fas fa-check-circle"></i></div>
+                <div class="status-title">VALID</div>
+                <div class="status-desc">Reservasi Dikonfirmasi</div>
+            </div>
         <% } else if (booking.status == 'checked_in') { %>
-            <div class="icon">⚠️</div>
-            <h1 style="color: orange;">SUDAH TERPAKAI</h1>
-            <p>Tamu ini sudah Check-in sebelumnya.</p>
+            <div class="status-header bg-used">
+                <div class="icon-box"><i class="fas fa-exclamation-circle"></i></div>
+                <div class="status-title">USED</div>
+                <div class="status-desc">Tiket Sudah Terpakai</div>
+            </div>
         <% } else { %>
-            <div class="icon">❌</div>
-            <h1 style="color: red;">TIDAK VALID</h1>
-            <p>Tiket ini sudah dibatalkan atau tidak ditemukan.</p>
+            <div class="status-header bg-invalid">
+                <div class="icon-box"><i class="fas fa-times-circle"></i></div>
+                <div class="status-title">INVALID</div>
+                <div class="status-desc">Tiket Tidak Ditemukan / Batal</div>
+            </div>
         <% } %>
 
-        <div class="details">
-            <strong>ID:</strong> <%= booking.id %><br>
-            <strong>Nama:</strong> <%= booking.name %><br>
-            <strong>Meja:</strong> <%= booking.table_id %>
+        <div class="ticket-body">
+            <div class="info-group">
+                <div class="label">Nama Tamu</div>
+                <div class="value" style="font-size: 1.4rem;"><%= booking.name %></div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between;">
+                <div class="info-group">
+                    <div class="label">Booking ID</div>
+                    <div class="value"><%= booking.id %></div>
+                </div>
+                <div class="info-group" style="text-align: right;">
+                    <div class="label">Jam</div>
+                    <div class="value"><%= booking.start_time %></div>
+                </div>
+            </div>
+
+            <div class="slot-container">
+                <div class="slot-box" style="border-right: 1px solid #ddd;">
+                    <div class="slot-icon"><i class="fas fa-utensils"></i> MEJA</div>
+                    <div class="slot-val"><%= booking.table_id %></div>
+                </div>
+                <div class="slot-box">
+                    <div class="slot-icon"><i class="fas fa-car"></i> PARKIR</div>
+                    <div class="slot-val">
+                        <%= booking.parking_slot_id ? booking.parking_slot_id : '-' %>
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <% if (user && user.role == 'admin' && booking.status == 'confirmed') { %>
-            <form action="/admin/checkin/<%= booking.id %>" method="POST" style="margin-top: 20px;">
-                <button style="background: #28a745; color: white; border: none; padding: 15px; width: 100%; font-size: 1rem; border-radius: 5px; cursor: pointer;">
-                    SETUJU MASUK (CHECK-IN)
-                </button>
-            </form>
+
+        <% if (user && user.role == 'admin' && (booking.status == 'confirmed' || booking.status == 'paid')) { %>
+            <div class="admin-section">
+                <form action="/admin/checkin/<%= booking.id %>" method="POST">
+                    <button class="btn-action">
+                        <i class="fas fa-qrcode"></i> VERIFIKASI KEDATANGAN
+                    </button>
+                </form>
+            </div>
         <% } %>
+
     </div>
+
 </body>
 </html>
