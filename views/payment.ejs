@@ -50,10 +50,12 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Script Countdown tetap sama...
+        // Script Countdown Timer
         let time = 300; 
         const countdownEl = document.getElementById('countdown');
+        
         setInterval(() => {
             const minutes = Math.floor(time / 60);
             let seconds = time % 60;
@@ -62,31 +64,24 @@
             if (time > 0) time--;
         }, 1000);
 
-        // --- SCRIPT BARU SWEETALERT ---
+        // --- UPDATE LOGIKA TOMBOL BAYAR ---
         function confirmPayment() {
+            // 1. Tampilkan Loading yang tidak bisa ditutup user
             Swal.fire({
-                title: 'Memverifikasi Pembayaran...',
-                text: 'Mohon tunggu sebentar',
+                title: 'Sedang Memproses...',
+                html: 'Memverifikasi pembayaran & menerbitkan E-Ticket.<br><b>Mohon jangan tutup halaman ini.</b>',
                 icon: 'info',
-                timer: 2000, // Tunggu 2 detik (pura-pura ngecek bank)
-                timerProgressBar: true,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
                 showConfirmButton: false,
                 didOpen: () => {
                     Swal.showLoading()
                 }
-            }).then(() => {
-                // Setelah 2 detik, Munculkan Sukses
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Pembayaran Diterima!',
-                    text: 'Tiket Anda sedang diterbitkan.',
-                    showConfirmButton: false,
-                    timer: 1500
-                }).then(() => {
-                    // Submit Form secara manual
-                    document.getElementById('payForm').submit();
-                });
             });
+
+            // 2. Submit Form (Biarkan backend bekerja mengirim email)
+            // Backend akan memakan waktu 3-5 detik, selama itu loading di atas akan terus berputar
+            document.getElementById('payForm').submit();
         }
     </script>
 </body>
