@@ -94,7 +94,7 @@ const initDatabase = () => {
         const seedMenus = `INSERT IGNORE INTO menus (id, name, description, price, category, image_url) VALUES 
             (1, 'Salmon Sashimi Supreme', 'Irisan ikan salmon segar Norwegia.', 85000, 'food', 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351'),
             (2, 'Wagyu Beef Steak', 'Daging sapi Wagyu A5.', 250000, 'food', 'https://images.unsplash.com/photo-1546241072-48010ad2862c'),
-            (3, 'Chicken Katsu', 'Daging Ayam asli jepang', 250000, 'food', '/img/katsu.jpg'),
+            (100, 'Chicken Katsu', 'Daging Ayam asli jepang', 250000, 'food', '/img/katsu.jpg'),
             (4, 'Dragon Roll Sushi', 'Sushi roll isi udang tempura.', 55000, 'food', 'https://images.unsplash.com/photo-1553621042-f6e147245754'),
             (5, 'Matcha Latte', 'Teh hijau asli Jepang.', 35000, 'beverage', 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7'),
             (6, 'Ogura Ice Cream', 'Es krim kacang merah.', 25000, 'dessert', 'https://images.unsplash.com/photo-1563805042-7684c019e1cb')`;

@@ -7,35 +7,68 @@
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* Tambahan CSS untuk Pemisah Kategori */
-        .category-header {
+        /* CSS KHUSUS MENU (HEADER & KATEGORI) */
+        
+        /* HEADER MEWAH */
+        .menu-header {
+            background: #1a1a1a;
+            padding: 60px 20px;
             text-align: center;
-            margin: 60px 0 30px 0;
             position: relative;
+            border-bottom: 3px solid var(--gold);
+            margin-bottom: 40px;
+        }
+        .menu-header h1 {
+            font-family: 'Playfair Display', serif;
+            color: var(--gold);
+            margin: 0;
+            font-size: 3rem;
+            letter-spacing: 2px;
+        }
+        .menu-header p {
+            color: #888; margin-top: 10px; font-style: italic; font-size: 1.1rem;
+        }
+
+        /* TOMBOL BACK BULAT */
+        .btn-back {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gold);
+            font-size: 1.2rem;
+            text-decoration: none;
+            border: 1px solid var(--gold);
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            background: var(--gold); color: black; box-shadow: 0 0 15px rgba(197, 160, 89, 0.5);
+        }
+
+        /* PEMISAH KATEGORI */
+        .category-header {
+            text-align: center; margin: 60px 0 30px 0; position: relative;
         }
         .category-header h2 {
-            display: inline-block;
-            color: var(--gold);
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
-            background: var(--dark-bg);
-            padding: 0 20px;
-            position: relative;
-            z-index: 1;
-            margin: 0;
+            display: inline-block; color: var(--gold); font-family: 'Playfair Display', serif;
+            font-size: 2rem; background: var(--dark-bg); padding: 0 20px; position: relative; z-index: 1; margin: 0;
         }
         .category-header::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #333;
-            z-index: 0;
+            content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: #333; z-index: 0;
         }
-        .sub-text {
-            color: #666; font-size: 0.9rem; margin-top: 5px; font-style: italic;
+        .sub-text { color: #666; font-size: 0.9rem; margin-top: 5px; font-style: italic; }
+
+        /* Responsif HP */
+        @media (max-width: 768px) {
+            .menu-header { padding: 30px 20px; }
+            .menu-header h1 { font-size: 2rem; margin-top: 40px; }
+            .btn-back { top: 20px; left: 20px; transform: none; }
         }
     </style>
 </head>
