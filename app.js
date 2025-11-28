@@ -267,7 +267,7 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
 
 app.get('/ticket/:id', requireLogin, (req, res) => {
     const bookingId = req.params.id;
-    const sql = `SELECT r.*, u.name, u.email FROM reservations r JOIN users u ON r.user_id = u.id WHERE r.id = ?`;
+    const sql = `SELECT r.*, u.name, u.email FROM reservations r JOIN users u ON r.user_id = u.id WHERE r.id = ? AND r.user_id = ?`;
     db.query(sql, [bookingId], (err, results) => {
         if (err || results.length === 0) return res.send("Tiket tidak ditemukan!");
         const verifyUrl = `https://${APP_DOMAIN}/verify/${bookingId}`;
