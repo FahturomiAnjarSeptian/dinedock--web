@@ -21,7 +21,7 @@ const initDatabase = () => {
 
     // 3. ISI DATA (Langsung tanpa jeda waktu)
     console.log("🌱 Sedang Mengisi Data...");
-
+    db.query("DELETE FROM menus");
     // A. MENU MAKANAN (Pakai REPLACE INTO agar data lama tertimpa)
     const seedMenus = `REPLACE INTO menus (id, name, description, price, category, image_url) VALUES 
         (1, 'Salmon Sashimi Supreme', 'Irisan ikan salmon segar Norwegia.', 85000, 'food', 'https://images.unsplash.com/photo-1579584425555-c3ce17fd4351'),
