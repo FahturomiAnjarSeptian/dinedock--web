@@ -327,7 +327,11 @@ app.post('/admin/cancel/:id', requireAdmin, (req, res) => {
         res.redirect('/admin');
     });
 });
-
+app.get('/fix-db', (req, res) => {
+    const initDatabase = require('./config/setup');
+    initDatabase(); // Paksa jalankan fungsi update database
+    res.send("<h1>🔄 Database Sedang Diupdate...</h1><p>Silakan tunggu 5-10 detik, lalu <a href='/menu'>Cek Halaman Menu</a>.</p>");
+});
 // SETUP
 const initDatabase = require('./config/setup'); 
 if (require.main === module) {
@@ -336,4 +340,5 @@ if (require.main === module) {
         console.log(`\n🚀 Server berjalan di Port ${PORT}`);
     });
 }
+
 module.exports = app;
