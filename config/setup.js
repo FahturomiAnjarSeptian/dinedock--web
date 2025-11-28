@@ -29,7 +29,8 @@ const initDatabase = () => {
         
         -- MENU BARU ANDA (ID 105) --
         (105, 'Chicken Katsu', 'Daging Ayam asli jepang', 25000, 'food', '/img/katsu.jpg'),
-        
+        (6, 'Beef Teriyaki', 'Daging sapi segar asli jepang', 25000, 'food', '/img/teriyaki.jpg'),
+
         (3, 'Dragon Roll Sushi', 'Sushi roll isi udang tempura.', 55000, 'food', 'https://images.unsplash.com/photo-1553621042-f6e147245754'),
         (4, 'Matcha Latte', 'Teh hijau asli Jepang.', 35000, 'beverage', 'https://images.unsplash.com/photo-1515823064-d6e0c04616a7'),
         (5, 'Ogura Ice Cream', 'Es krim kacang merah.', 25000, 'dessert', 'https://images.unsplash.com/photo-1563805042-7684c019e1cb')`;
