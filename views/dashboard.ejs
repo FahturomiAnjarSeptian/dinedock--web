@@ -9,62 +9,18 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
     <style>
-        /* CSS TAMBAHAN KHUSUS RESPONSIVE NAVBAR */
-        
-        /* 1. Default (Desktop): Hamburger Sembunyi */
-        .hamburger { display: none; cursor: pointer; font-size: 1.5rem; color: #c5a059; }
-        
-        /* Navbar Container */
-        .navbar-container {
-            position: absolute; top: 20px; right: 20px; z-index: 100;
-        }
-
-        /* Menu Links (Desktop) */
-        .nav-links {
-            display: flex; gap: 15px; align-items: center;
-        }
-
-        /* 2. Mode HP (Layar < 768px) */
-        @media (max-width: 768px) {
-            /* Munculkan Hamburger */
-            .hamburger { display: block; position: absolute; top: 0; right: 0; }
-            
-            /* Sembunyikan Menu (Default) & Ubah jadi Dropdown */
-            .nav-links {
-                display: none; /* Hilang dulu */
-                flex-direction: column;
-                background: rgba(0,0,0,0.95);
-                padding: 20px;
-                border-radius: 10px;
-                position: absolute;
-                top: 40px;
-                right: 0;
-                width: 200px;
-                border: 1px solid #c5a059;
-                box-shadow: 0 10px 20px rgba(0,0,0,0.5);
-            }
-
-            /* Kelas Aktif (Saat hamburger diklik) */
-            .nav-links.active { display: flex; }
-
-            /* Atur ulang tombol biar rapi di HP */
-            .nav-links a, .nav-links span {
-                width: 100%; text-align: center; margin: 0; box-sizing: border-box;
-            }
-            .hero h1 { margin-top: 60px; font-size: 2.5rem; } /* Turunkan judul biar ga ketabrak */
-        }
-        /* --- STYLE KHUSUS TOMBOL KENDARAAN (AGAR MENCOLOK) --- */
+        /* --- PERBAIKAN STYLE TOMBOL KENDARAAN --- */
         .vehicle-option {
             margin: 20px 0;
             position: relative;
+            width: 100%;
         }
         
-        /* Sembunyikan checkbox asli yang jelek */
         .vehicle-option input[type="checkbox"] {
-            display: none; 
+            display: none; /* Sembunyikan checkbox asli */
         }
 
-        /* Buat Label menjadi Tombol Besar */
+        /* Tombol Default (Mati) */
         .vehicle-btn {
             display: flex;
             align-items: center;
@@ -72,64 +28,76 @@
             gap: 10px;
             width: 100%;
             padding: 15px;
-            background: rgba(255, 255, 255, 0.1); /* Abu transparan */
+            box-sizing: border-box; /* Agar padding tidak bikin tombol kegedean */
+            background: rgba(255, 255, 255, 0.05);
             border: 2px dashed #666;
-            color: #aaa;
+            color: #888;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        /* Efek Hover */
         .vehicle-btn:hover {
-            border-color: var(--gold);
-            color: white;
+            border-color: #c5a059;
+            color: #ddd;
         }
 
-        /* LOGIKA SAAT DICENTANG (CHECKED) */
-        /* Saat checkbox 'check_vehicle' dicentang, ubah style 'vehicle-btn' setelahnya */
+        /* Tombol Aktif (Saat Diklik) */
         #check_vehicle:checked + .vehicle-btn {
-            background: var(--gold);
-            color: black;
-            border: 2px solid var(--gold);
-            box-shadow: 0 0 15px rgba(197, 160, 89, 0.4);
+            background: rgba(197, 160, 89, 0.2); /* Emas Transparan */
+            color: #c5a059;
+            border: 2px solid #c5a059; /* Garis Solid */
+            box-shadow: 0 0 15px rgba(197, 160, 89, 0.2);
         }
 
-        /* Animasi Ikon Mobil saat aktif */
         #check_vehicle:checked + .vehicle-btn i {
             transform: scale(1.2);
-        }f
+        }
+
+        /* CSS RESPONSIVE (Menu HP) */
+        .hamburger { display: none; cursor: pointer; font-size: 1.5rem; color: #c5a059; }
+        .navbar-container { position: absolute; top: 20px; right: 20px; z-index: 100; }
+        .nav-links { display: flex; gap: 15px; align-items: center; }
+
+        @media (max-width: 768px) {
+            .hamburger { display: block; position: absolute; top: 0; right: 0; }
+            .nav-links {
+                display: none; 
+                flex-direction: column;
+                background: rgba(0,0,0,0.95);
+                padding: 20px;
+                border-radius: 10px;
+                position: absolute; top: 40px; right: 0; width: 200px;
+                border: 1px solid #c5a059;
+                box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            }
+            .nav-links.active { display: flex; }
+            .nav-links a, .nav-links span { width: 100%; text-align: center; margin: 0; }
+            .hero h1 { margin-top: 60px; font-size: 2.5rem; }
+        }
     </style>
 </head>
 <body>
 
     <div class="hero">
-        
         <div class="navbar-container">
             <div class="hamburger" onclick="toggleMenu()">
                 <i class="fas fa-bars"></i>
             </div>
-
             <div class="nav-links" id="navMenu">
                 <span style="color: #c5a059; font-weight: bold; padding: 10px 0; border-bottom: 1px solid #333; margin-bottom: 10px; display: block;">
                     <i class="fas fa-user-circle"></i> <%= user.userName %>
                 </span>
-
-                <a href="/menu" style="color: #c5a059; text-decoration: none; font-weight: bold; border: 1px solid #c5a059; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
-                    <i class="fas fa-book-open"></i> MENU
-                </a>
-
-                <a href="/history" style="color: white; text-decoration: none; font-weight: bold; border: 1px solid white; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; transition: 0.3s;">
-                    <i class="fas fa-history"></i> RIWAYAT
-                </a>
-
+                <a href="/menu" style="color: #c5a059; font-weight: bold; border: 1px solid #c5a059; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; text-decoration: none;">MENU</a>
+                <a href="/history" style="color: white; font-weight: bold; border: 1px solid white; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; text-decoration: none;">RIWAYAT</a>
                 <% if (user.role === 'admin') { %>
-                    <a href="/admin" style="color: white; text-decoration: none; border: 1px solid white; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem;">Admin Panel</a>
+                    <a href="/admin" style="color: white; border: 1px solid white; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; text-decoration: none;">Admin Panel</a>
                 <% } %>
-                
-                <a href="/logout" style="color: #ff4444; text-decoration: none; border: 1px solid #ff4444; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem;">Logout</a>
+                <a href="/logout" style="color: #ff4444; border: 1px solid #ff4444; padding: 8px 15px; border-radius: 20px; font-size: 0.8rem; text-decoration: none;">Logout</a>
             </div>
         </div>
 
@@ -213,16 +181,15 @@
 
                         <div class="vehicle-option">
                             <input type="checkbox" id="check_vehicle" onchange="toggleParking()">
-                            
                             <label for="check_vehicle" class="vehicle-btn">
                                 <i class="fas fa-car"></i>
                                 <span>SAYA BAWA KENDARAAN</span>
                             </label>
                         </div>
 
-                        <div id="parking_input_group" style="display: none; margin-top: 10px; border-top: 1px solid #333; padding-top: 10px;">
-                            <label style="color: #c5a059; font-size: 0.9rem; margin-bottom:5px; display:block;">
-                                <i class="fas fa-arrow-left"></i> Silakan Klik Slot Parkir di Peta
+                        <div id="parking_input_group" style="display: none; margin-top: 10px; border-top: 1px solid #333; paddingTop: 10px;">
+                            <label style="color: #c5a059; font-size: 0.8rem; margin-bottom:5px; display:block;">
+                                <i class="fas fa-arrow-left"></i> Silakan Klik Slot Parkir di Peta Kiri
                             </label>
                             <input type="text" id="display_parking" readonly placeholder="Belum pilih slot..."
                                    style="background: #222; border: 1px solid #444; color: white; width: 100%; padding: 10px; border-radius: 5px;">
@@ -242,10 +209,8 @@
     </div>
 
     <script>
-        // SCRIPT TOGGLE MENU HP
         function toggleMenu() {
-            const nav = document.getElementById('navMenu');
-            nav.classList.toggle('active');
+            document.getElementById('navMenu').classList.toggle('active');
         }
 
         function selectSlot(type, id, element) {
@@ -253,7 +218,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'Slot Tidak Tersedia',
-                    text: 'Maaf, ' + (type === 'table' ? 'Meja' : 'Parkiran') + ' ini sudah dibooking orang lain!',
+                    text: 'Maaf, slot ini sudah dibooking orang lain!',
                     confirmButtonColor: '#c5a059'
                 });
                 return;
@@ -268,10 +233,11 @@
             } 
             else if (type === 'parking') {
                 if (!document.getElementById('check_vehicle').checked) {
+                    // ALERT YANG SUDAH DIPERBAIKI BAHASANYA
                     Swal.fire({
                         icon: 'warning',
                         title: 'Oops...',
-                        text: 'Silakan centang "I bring a vehicle" terlebih dahulu!',
+                        text: 'Silakan aktifkan tombol "SAYA BAWA KENDARAAN" terlebih dahulu!',
                         confirmButtonColor: '#333'
                     });
                     return;
