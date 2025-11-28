@@ -1,52 +1,53 @@
-// config/database.js (VERCEL + AIVEN SSL FIX)
+// config/database.js (FINAL STABLE: CONNECTION POOL)
 const mysql = require('mysql2');
 require('dotenv').config();
 
-let connection;
+let pool;
 
-// Konfigurasi Koneksi
-const config = {
-    connectTimeout: 60000, // 60 detik biar gak timeout
+// Konfigurasi dasar agar koneksi tidak gampang putus
+const baseConfig = {
+    waitForConnections: true,
+    connectionLimit: 5, // Batasi max 5 koneksi (Aiven Free tier limitnya kecil)
+    queueLimit: 0,
+    connectTimeout: 60000 // 60 detik
 };
 
 if (process.env.DATABASE_URL) {
-    // --- KONEKSI CLOUD (AIVEN) ---
-    console.log("☁️ Menggunakan Koneksi Cloud...");
-    Object.assign(config, {
+    // --- KONEKSI CLOUD (VERCEL + AIVEN) ---
+    console.log("☁️ Menggunakan Connection Pool Cloud...");
+    
+    // Gabungkan config dasar dengan config URI Aiven
+    const cloudConfig = Object.assign({}, baseConfig, {
         uri: process.env.DATABASE_URL,
         ssl: {
-            rejectUnauthorized: false // PENTING: Agar mau konek ke Aiven
+            rejectUnauthorized: false // Wajib untuk Aiven
         }
     });
-    connection = mysql.createConnection(config);
+    
+    pool = mysql.createPool(cloudConfig);
+
 } else {
-    // --- KONEKSI LOKAL ---
-    console.log("💻 Menggunakan Koneksi Lokal...");
-    connection = mysql.createConnection({
+    // --- KONEKSI LOKAL (XAMPP) ---
+    console.log("💻 Menggunakan Connection Pool Lokal...");
+    
+    pool = mysql.createPool({
         host: 'localhost',
         user: 'root',
         password: '',
-        database: 'dinedock'
+        database: 'dinedock',
+        ...baseConfig
     });
 }
 
-// Coba Konek
-connection.connect((err) => {
+// Cek Koneksi (Hanya untuk log di awal)
+pool.getConnection((err, connection) => {
     if (err) {
-        console.error('❌ Gagal Konek Database:', err.message);
-        return;
-    }
-    console.log('✅ Berhasil Konek Database!');
-});
-
-// Penanganan Error Putus Nyambung (Auto Reconnect sederhana)
-connection.on('error', function(err) {
-    console.log('⚠️ db error', err);
-    if(err.code === 'PROTOCOL_CONNECTION_LOST') { 
-        console.log('Mencoba konek ulang...');
-    } else {                                      
-        throw err;                                  
+        console.error('❌ Gagal membuat Pool Database:', err.message);
+    } else {
+        console.log('✅ Database Pool Siap!');
+        connection.release(); // Kembalikan koneksi ke kolam
     }
 });
 
-module.exports = connection;
+// Export pool (cara pakainya sama persis dengan connection biasa)
+module.exports = pool;
