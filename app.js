@@ -12,16 +12,19 @@ const MySQLStore = require('express-mysql-session')(session);
 const app = express();
 // --- [TAMBAHAN BARU] FUNGSI OTOMATIS RELEASE SLOT ---
 // --- [SOLUSI FINAL] FUNGSI OTOMATIS RELEASE SLOT (VERSI SQL NATIVE) ---
+// --- [SOLUSI ANTI-BINGUNG] ---
+// Kita gunakan NOW() bawaan database. 
+// Jika database sudah WIB, dia cocok. Jika UTC, kita lihat nanti.
+// Yang penting STOP menghapus booking secara instan dulu.
+
 const releaseExpiredSlots = () => {
     return new Promise((resolve, reject) => {
         
-        // Kita tidak hitung jam di JS lagi, tapi pakai fungsi SQL:
-        // TIMESTAMP(date, time) -> Menggabungkan tanggal & jam reservasi
-        // UTC_TIMESTAMP() -> Mengambil jam sekarang (UTC) dari database
-        // DATE_ADD(..., INTERVAL 7 HOUR) -> Mengubah UTC ke WIB (Jakarta)
+        // REVISI: Hapus "DATE_ADD" dan "UTC_TIMESTAMP". 
+        // Ganti dengan "NOW()" saja.
         
         const sqlCondition = `
-            TIMESTAMP(CONCAT(r.reservation_date, ' ', r.end_time)) <= DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR)
+            TIMESTAMP(CONCAT(r.reservation_date, ' ', r.end_time)) <= NOW()
         `;
 
         const sqlResetTables = `
