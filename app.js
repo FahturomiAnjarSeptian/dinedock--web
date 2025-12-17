@@ -243,7 +243,7 @@ app.post('/book', requireLogin, (req, res) => {
     bookingTime.setSeconds(0);
 
     // 2. Hitung End Time = Booking Time + 1 Menit (60000 ms)
-    let endDate = new Date(bookingTime.getTime() + 1 * 60000); 
+    let endDate = new Date(bookingTime.getTime() + 2 * 60000); 
 
     // 3. Format ke string jam (HH:MM:SS)
     const endTime = endDate.toTimeString().split(' ')[0];
