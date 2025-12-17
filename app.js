@@ -237,10 +237,16 @@ app.post('/book', requireLogin, (req, res) => {
     const { name, email, phone, date, time, table_id, parking_id } = req.body;
     const userId = req.session.userId;
     let [hours, minutes] = time.split(':');
-    let endDate = new Date();
-    endDate.setHours(parseInt(hours) + 1);
-    endDate.setMinutes(parseInt(minutes) + 30);
-    const endTime = endDate.toTimeString().split(' ')[0]; 
+    let bookingTime = new Date();
+    bookingTime.setHours(parseInt(hours));
+    bookingTime.setMinutes(parseInt(minutes));
+    bookingTime.setSeconds(0);
+
+    // 2. Hitung End Time = Booking Time + 1 Menit (60000 ms)
+    let endDate = new Date(bookingTime.getTime() + 1 * 60000); 
+
+    // 3. Format ke string jam (HH:MM:SS)
+    const endTime = endDate.toTimeString().split(' ')[0];
     const startTime = time + ":00";
     const finalParkingId = parking_id === '' ? null : parking_id;
     const bookingId = "RES-" + Date.now();
