@@ -17,14 +17,16 @@ const app = express();
 // Jika database sudah WIB, dia cocok. Jika UTC, kita lihat nanti.
 // Yang penting STOP menghapus booking secara instan dulu.
 
+// --- [FINAL FIX] SINKRONISASI AIVEN UTC -> WIB ---
 const releaseExpiredSlots = () => {
     return new Promise((resolve, reject) => {
         
-        // REVISI: Hapus "DATE_ADD" dan "UTC_TIMESTAMP". 
-        // Ganti dengan "NOW()" saja.
+        // LOGIKA:
+        // Jam Database (UTC) + 7 JAM = Jam WIB (Indonesia)
+        // Kita bandingkan Waktu Selesai Booking dengan Jam WIB tersebut.
         
         const sqlCondition = `
-            TIMESTAMP(CONCAT(r.reservation_date, ' ', r.end_time)) <= NOW()
+            TIMESTAMP(CONCAT(r.reservation_date, ' ', r.end_time)) <= DATE_ADD(NOW(), INTERVAL 7 HOUR)
         `;
 
         const sqlResetTables = `
