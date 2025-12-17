@@ -11,52 +11,43 @@ const MySQLStore = require('express-mysql-session')(session);
 
 const app = express();
 // --- [TAMBAHAN BARU] FUNGSI OTOMATIS RELEASE SLOT ---
+// --- [SOLUSI FINAL] FUNGSI OTOMATIS RELEASE SLOT (VERSI SQL NATIVE) ---
 const releaseExpiredSlots = () => {
     return new Promise((resolve, reject) => {
-        // 1. Ambil waktu sekarang dalam zona waktu Jakarta (WIB)
-        const now = new Date();
-        // Mengubah waktu server (UTC) ke WIB (UTC+7) secara manual untuk string SQL
-        // Format target: 'YYYY-MM-DD HH:mm:ss'
-        const offset = 7 * 60 * 60 * 1000; // 7 jam dalam milidetik
-        const wibDate = new Date(now.getTime() + offset);
         
-        const yyyy = wibDate.getUTCFullYear();
-        const mm = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
-        const dd = String(wibDate.getUTCDate()).padStart(2, '0');
-        const hh = String(wibDate.getUTCHours()).padStart(2, '0');
-        const min = String(wibDate.getUTCMinutes()).padStart(2, '0');
-        const ss = String(wibDate.getUTCSeconds()).padStart(2, '0');
+        // Kita tidak hitung jam di JS lagi, tapi pakai fungsi SQL:
+        // TIMESTAMP(date, time) -> Menggabungkan tanggal & jam reservasi
+        // UTC_TIMESTAMP() -> Mengambil jam sekarang (UTC) dari database
+        // DATE_ADD(..., INTERVAL 7 HOUR) -> Mengubah UTC ke WIB (Jakarta)
         
-        const currentDateTimeWIB = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+        const sqlCondition = `
+            TIMESTAMP(CONCAT(r.reservation_date, ' ', r.end_time)) <= DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR)
+        `;
 
-        // 2. Query untuk melepas MEJA yang waktunya sudah habis
-        // Logic: Ubah ke 'available' JIKA statusnya 'maintenance' DAN waktu end_time reservasi < waktu sekarang
         const sqlResetTables = `
             UPDATE tables t
             JOIN reservations r ON t.id = r.table_id
             SET t.status = 'available'
             WHERE t.status = 'maintenance'
             AND r.status IN ('confirmed', 'pending', 'checked_in')
-            AND CONCAT(r.reservation_date, ' ', r.end_time) <= ?
+            AND ${sqlCondition}
         `;
 
-        // 3. Query untuk melepas PARKIR yang waktunya sudah habis
         const sqlResetParking = `
             UPDATE parking_slots p
             JOIN reservations r ON p.id = r.parking_slot_id
             SET p.status = 'available'
             WHERE p.status = 'maintenance'
             AND r.status IN ('confirmed', 'pending', 'checked_in')
-            AND CONCAT(r.reservation_date, ' ', r.end_time) <= ?
+            AND ${sqlCondition}
         `;
 
-        // Jalankan Query
-        db.query(sqlResetTables, [currentDateTimeWIB], (err) => {
+        db.query(sqlResetTables, (err) => {
             if (err) console.error("⚠️ Gagal Auto-Release Meja:", err);
             
-            db.query(sqlResetParking, [currentDateTimeWIB], (err) => {
+            db.query(sqlResetParking, (err) => {
                 if (err) console.error("⚠️ Gagal Auto-Release Parkir:", err);
-                resolve(); // Selesai, lanjut ke proses berikutnya
+                resolve();
             });
         });
     });
