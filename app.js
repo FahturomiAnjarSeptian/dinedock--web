@@ -10,6 +10,57 @@ const nodemailer = require('nodemailer');
 const MySQLStore = require('express-mysql-session')(session);
 
 const app = express();
+// --- [TAMBAHAN BARU] FUNGSI OTOMATIS RELEASE SLOT ---
+const releaseExpiredSlots = () => {
+    return new Promise((resolve, reject) => {
+        // 1. Ambil waktu sekarang dalam zona waktu Jakarta (WIB)
+        const now = new Date();
+        // Mengubah waktu server (UTC) ke WIB (UTC+7) secara manual untuk string SQL
+        // Format target: 'YYYY-MM-DD HH:mm:ss'
+        const offset = 7 * 60 * 60 * 1000; // 7 jam dalam milidetik
+        const wibDate = new Date(now.getTime() + offset);
+        
+        const yyyy = wibDate.getUTCFullYear();
+        const mm = String(wibDate.getUTCMonth() + 1).padStart(2, '0');
+        const dd = String(wibDate.getUTCDate()).padStart(2, '0');
+        const hh = String(wibDate.getUTCHours()).padStart(2, '0');
+        const min = String(wibDate.getUTCMinutes()).padStart(2, '0');
+        const ss = String(wibDate.getUTCSeconds()).padStart(2, '0');
+        
+        const currentDateTimeWIB = `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`;
+
+        // 2. Query untuk melepas MEJA yang waktunya sudah habis
+        // Logic: Ubah ke 'available' JIKA statusnya 'maintenance' DAN waktu end_time reservasi < waktu sekarang
+        const sqlResetTables = `
+            UPDATE tables t
+            JOIN reservations r ON t.id = r.table_id
+            SET t.status = 'available'
+            WHERE t.status = 'maintenance'
+            AND r.status IN ('confirmed', 'pending', 'checked_in')
+            AND CONCAT(r.reservation_date, ' ', r.end_time) <= ?
+        `;
+
+        // 3. Query untuk melepas PARKIR yang waktunya sudah habis
+        const sqlResetParking = `
+            UPDATE parking_slots p
+            JOIN reservations r ON p.id = r.parking_slot_id
+            SET p.status = 'available'
+            WHERE p.status = 'maintenance'
+            AND r.status IN ('confirmed', 'pending', 'checked_in')
+            AND CONCAT(r.reservation_date, ' ', r.end_time) <= ?
+        `;
+
+        // Jalankan Query
+        db.query(sqlResetTables, [currentDateTimeWIB], (err) => {
+            if (err) console.error("⚠️ Gagal Auto-Release Meja:", err);
+            
+            db.query(sqlResetParking, [currentDateTimeWIB], (err) => {
+                if (err) console.error("⚠️ Gagal Auto-Release Parkir:", err);
+                resolve(); // Selesai, lanjut ke proses berikutnya
+            });
+        });
+    });
+};
 const PORT = 3000;
 
 const APP_DOMAIN = process.env.APP_DOMAIN || "localhost:3000";
@@ -77,7 +128,18 @@ app.get('/menu', (req, res) => {
     });
 });
 
-app.get('/dashboard', requireLogin, (req, res) => {
+// --- ROUTE DASHBOARD (DENGAN AUTO RESET) ---
+// Perhatikan penambahan kata 'async' di sebelum (req, res)
+app.get('/dashboard', requireLogin, async (req, res) => {
+    
+    // 1. Jalankan pembersihan slot otomatis sebelum ambil data
+    try {
+        await releaseExpiredSlots();
+    } catch (error) {
+        console.error("Error saat cleaning slots:", error);
+    }
+
+    // 2. Ambil data meja & parkir (Kode asli Anda)
     const sqlTables = "SELECT * FROM tables ORDER BY id ASC";
     const sqlParking = "SELECT * FROM parking_slots ORDER BY id ASC";
 
