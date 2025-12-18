@@ -678,15 +678,17 @@ app.post('/admin/cancel/:id', requireAdmin, (req, res) => {
     });
 
 });
-
-app.get('/fix-db', (req, res) => {
-
-    const initDatabase = require('./config/setup');
-
-    initDatabase(); // Paksa jalankan fungsi update database
-
-    res.send("<h1>🔄 Database Sedang Diupdate...</h1><p>Silakan tunggu 5-10 detik, lalu <a href='/menu'>Cek Halaman Menu</a>.</p>");
-
+const initDatabase = require('./config/setup');
+app.get('/fix-db', async (req, res) => { // Perhatikan kata 'async' di sini
+    try {
+        // KITA TUNGGU DI SINI SAMPAI SETUP SELESAI
+        await initDatabase(); 
+        
+        // Baru kirim respon setelah database benar-benar selesai
+        res.send("<h1>✅ Database Berhasil Diupdate!</h1><p>Silakan cek menu.</p><a href='/menu'>Ke Menu</a>");
+    } catch (error) {
+        res.status(500).send("<h1>❌ Gagal</h1><p>" + error.message + "</p>");
+    }
 });
 
 // SETUP
