@@ -1,191 +1,90 @@
-// app.js (VERCEL OPTIMIZED: POOLING + PREMIUM EMAIL)
-
+// app.js (VERSI FIX AUTO-EXPIRE)
 const path = require('path');
-
 const express = require('express');
-
 const bodyParser = require('body-parser');
-
 const session = require('express-session');
-
 const bcrypt = require('bcryptjs');
-
 const db = require('./config/database');
-
 const qrcode = require('qrcode');
-
 const nodemailer = require('nodemailer');
-
 const MySQLStore = require('express-mysql-session')(session);
-
-
-
 const app = express();
-
 const PORT = 3000;
-
-
-
 const APP_DOMAIN = process.env.APP_DOMAIN || "localhost:3000";
 
-
-
 app.set('trust proxy', 1);
-
 app.set('view engine', 'ejs');
-
 app.set('views', path.join(__dirname, 'views'));
-
-
-
 app.use(bodyParser.urlencoded({ extended: true }));
-
 app.use(express.static(path.join(__dirname, 'public')));
-
 app.use(bodyParser.json());
 
-
-
 const sessionStore = new MySQLStore({}, db);
-
-
-
 app.use(session({
-
     key: 'session_cookie_name',
-
     secret: process.env.SESSION_SECRET || 'rahasia_default',
-
     store: sessionStore,
-
     resave: false,
-
     saveUninitialized: false,
-
-    cookie: {
-
-        secure: true,
-
-        maxAge: 3600000,
-
-        sameSite: 'lax'
-
-    }
-
+    cookie: { secure: true, maxAge: 3600000, sameSite: 'lax' }
 }));
 
-
-
 const requireLogin = (req, res, next) => {
-
     if (!req.session.userId) return res.redirect('/login');
-
     next();
-
 };
 
+// ---------------- AUTO-EXPIRE ----------------
+function autoExpireBookings() {
+    const sql = `
+        SELECT id, table_id, parking_slot_id
+        FROM reservations
+        WHERE status = 'pending'
+        AND booking_end IS NOT NULL
+        AND booking_end < DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR)
+        LIMIT 10
+    `;
 
+    db.query(sql, (err, results) => {
+        if (err) return console.error("Auto-expire error:", err);
 
-const requireAdmin = (req, res, next) => {
+        if (results.length > 0) console.log(`⏰ Auto-expired ${results.length} booking(s)`);
 
-    if (!req.session.userId || req.session.role !== 'admin') {
-
-        return res.send("<h1>403 Forbidden</h1><p>Anda bukan Admin!</p><a href='/'>Kembali</a>");
-
-    }
-
-    next();
-
-};
-
-
-
-// --- OPTIMASI EMAIL (POOLING) ---
-
-// pool: true membuat koneksi tetap hidup, jadi kirim email kedua dst lebih cepat
-
-const transporter = nodemailer.createTransport({
-
-    pool: true,
-
-    host: 'smtp.gmail.com',
-
-    port: 465,
-
-    secure: true,
-
-    auth: {
-
-        user: process.env.GMAIL_USER || 'anjargaming06@gmail.com',
-
-        pass: process.env.GMAIL_PASS || 'jtjyoqtnskprfmrj'
-
-    },
-
-    maxConnections: 5,
-
-    maxMessages: 100
-
-});
-
-
-
-// --- ROUTES ---
-
-
-
-app.get('/', (req, res) => {
-
-    res.render('landing', { user: req.session.userId ? req.session : null });
-
-});
-
-
-
-app.get('/menu', (req, res) => {
-
-    db.query("SELECT * FROM menus", (err, results) => {
-
-        if (err) throw err;
-
-        res.render('menu', { menus: results, user: req.session.userId ? req.session : null });
-
+        results.forEach(b => {
+            db.query("UPDATE reservations SET status='expired' WHERE id=?", [b.id]);
+            db.query("UPDATE tables SET status='available' WHERE id=?", [b.table_id]);
+            if (b.parking_slot_id)
+                db.query("UPDATE parking_slots SET status='available' WHERE id=?", [b.parking_slot_id]);
+        });
     });
+}
 
+// panggil autoExpire setiap 30 detik
+setInterval(autoExpireBookings, 30 * 1000);
+
+// ---------------- ROUTES ----------------
+app.get('/', (req, res) => {
+    res.render('landing', { user: req.session.userId ? req.session : null });
 });
-
-
 
 app.get('/dashboard', requireLogin, (req, res) => {
+    // bisa tetap panggil manual jika mau update sebelum render
+    autoExpireBookings();
 
     const sqlTables = "SELECT * FROM tables ORDER BY id ASC";
-
     const sqlParking = "SELECT * FROM parking_slots ORDER BY id ASC";
 
-
-
     db.query(sqlTables, (err, tablesResult) => {
-
         if (err) throw err;
-
         db.query(sqlParking, (err, parkingResult) => {
-
             if (err) throw err;
-
             const mobil = parkingResult.filter(slot => slot.type === 'car');
-
             const motor = parkingResult.filter(slot => slot.type === 'bike');
-
             res.render('dashboard', {
-
                 tables: tablesResult, mobil: mobil, motor: motor, user: req.session
-
             });
-
         });
-
     });
-
 });
 
 // --- ROUTE HISTORY (RIWAYAT) ---
