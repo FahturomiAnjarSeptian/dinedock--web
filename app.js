@@ -127,6 +127,33 @@ const transporter = nodemailer.createTransport({
     maxMessages: 100
 
 });
+function autoExpireBookings() {
+    const sql = `
+        SELECT id, table_id, parking_slot_id
+        FROM reservations
+        WHERE status IN ('pending','confirmed')
+        AND booking_end IS NOT NULL
+        AND booking_end < DATE_ADD(NOW(), INTERVAL 7 HOUR)
+        LIMIT 10
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) return console.error(err);
+
+        if (results.length > 0) {
+            console.log(`⏰ Auto-expired ${results.length} booking(s)`);
+        }
+
+        results.forEach(b => {
+            db.query("UPDATE reservations SET status='expired' WHERE id=?", [b.id]);
+            db.query("UPDATE tables SET status='available' WHERE id=?", [b.table_id]);
+            if (b.parking_slot_id)
+                db.query("UPDATE parking_slots SET status='available' WHERE id=?", [b.parking_slot_id]);
+        });
+    });
+}
+
+setInterval(autoExpireBookings, 30 * 1000);
 
 
 
@@ -350,17 +377,13 @@ app.post('/book', requireLogin, (req, res) => {
 
     const userId = req.session.userId;
 
-    let [hours, minutes] = time.split(':');
+   // === AUTO EXPIRE 90 MENIT ===
+    const bookingStart = new Date(`${date}T${time}:00`);
+    const bookingEnd = new Date(bookingStart.getTime() + 2 * 60000); // 90 menit
 
-    let endDate = new Date();
+    const startTime = bookingStart.toTimeString().slice(0, 8);
+    const endTime   = bookingEnd.toTimeString().slice(0, 8);
 
-    endDate.setHours(parseInt(hours) + 1);
-
-    endDate.setMinutes(parseInt(minutes) + 30);
-
-    const endTime = endDate.toTimeString().split(' ')[0];
-
-    const startTime = time + ":00";
 
     const finalParkingId = parking_id === '' ? null : parking_id;
 
@@ -370,13 +393,13 @@ app.post('/book', requireLogin, (req, res) => {
 
     const sqlBooking = `INSERT INTO reservations
 
-        (id, user_id, table_id, parking_slot_id, reservation_date, start_time, end_time, status, payment_status)
+        (id, user_id, table_id, parking_slot_id, reservation_date, start_time, end_time, booking_start, booking_end, status, payment_status)
 
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'unpaid')`;
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'unpaid')`;
 
 
 
-    db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, date, startTime, endTime], (err, result) => {
+    db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, date, startTime, endTime, bookingStart, bookingEnd], (err, result) => {
 
         if (err) return res.send("Gagal Reservasi.");
 
