@@ -129,27 +129,31 @@ const transporter = nodemailer.createTransport({
 });
 function autoExpireBookings() {
     const sql = `
-        SELECT * FROM reservations
-        WHERE status IN ('pending', 'confirmed', 'checked_in')
+        SELECT id, table_id, parking_slot_id
+        FROM reservations
+        WHERE status IN ('pending','confirmed')
+        AND booking_end IS NOT NULL
         AND booking_end < DATE_ADD(NOW(), INTERVAL 7 HOUR)
+        LIMIT 10
     `;
 
     db.query(sql, (err, results) => {
         if (err) return console.error(err);
 
+        if (results.length > 0) {
+            console.log(`⏰ Auto-expired ${results.length} booking(s)`);
+        }
+
         results.forEach(b => {
-            db.query("UPDATE reservations SET status = 'expired' WHERE id = ?", [b.id]);
-            db.query("UPDATE tables SET status = 'available' WHERE id = ?", [b.table_id]);
+            db.query("UPDATE reservations SET status='expired' WHERE id=?", [b.id]);
+            db.query("UPDATE tables SET status='available' WHERE id=?", [b.table_id]);
             if (b.parking_slot_id)
-                db.query("UPDATE parking_slots SET status = 'available' WHERE id = ?", [b.parking_slot_id]);
+                db.query("UPDATE parking_slots SET status='available' WHERE id=?", [b.parking_slot_id]);
         });
     });
 }
 
-app.use((req, res, next) => {
-    autoExpireBookings();
-    next();
-});
+setInterval(autoExpireBookings, 30 * 1000);
 
 
 
