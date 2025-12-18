@@ -565,22 +565,11 @@ app.get('/fix-db', (req, res) => {
 
 });
 
-// SETUP
-
 const initDatabase = require('./config/setup');
+initDatabase();
 
-if (require.main === module) {
-
-    initDatabase();
-
-    app.listen(PORT, () => {
-
-        console.log(`\n🚀 Server berjalan di Port ${PORT}`);
-
-    });
-
+if (!process.env.VERCEL) {
+    app.listen(PORT, () => console.log(`🚀 Server berjalan di Port ${PORT}`));
 }
-
-
 
 module.exports = app;
