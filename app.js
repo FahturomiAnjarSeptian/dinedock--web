@@ -3,80 +3,29 @@ const path = require('path');
 const express = require('express');
 const bodyParser = require('body-parser');
 const session = require('express-session');
-const bcrypt = require('bcryptjs'); 
-const db = require('./config/database'); 
-const qrcode = require('qrcode'); 
+const bcrypt = require('bcryptjs');
+const db = require('./config/database');
+const qrcode = require('qrcode');
 const nodemailer = require('nodemailer');
 const MySQLStore = require('express-mysql-session')(session);
-
 const app = express();
-// --- [TAMBAHAN BARU] FUNGSI OTOMATIS RELEASE SLOT ---
-// --- [SOLUSI FINAL] FUNGSI OTOMATIS RELEASE SLOT (VERSI SQL NATIVE) ---
-// --- [SOLUSI ANTI-BINGUNG] ---
-// Kita gunakan NOW() bawaan database. 
-// Jika database sudah WIB, dia cocok. Jika UTC, kita lihat nanti.
-// Yang penting STOP menghapus booking secara instan dulu.
-
-// --- [FINAL FIX] SINKRONISASI AIVEN UTC -> WIB ---
-// --- [FIXED] FUNGSI AUTO-RELEASE (SINKRONISASI UTC -> WIB) ---
-const releaseExpiredSlots = () => {
-    return new Promise((resolve, reject) => {
-        
-        // LOGIKA: Bandingkan Waktu Booking dengan (Jam Database UTC + 7 JAM)
-        const sqlCondition = `
-            TIMESTAMP(CONCAT(r.reservation_date, ' ', r.end_time)) <= DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR)
-        `;
-
-        const sqlResetTables = `
-            UPDATE tables t
-            JOIN reservations r ON t.id = r.table_id
-            SET t.status = 'available'
-            WHERE t.status = 'maintenance'
-            AND r.status IN ('confirmed', 'pending', 'checked_in')
-            AND ${sqlCondition}
-        `;
-
-        const sqlResetParking = `
-            UPDATE parking_slots p
-            JOIN reservations r ON p.id = r.parking_slot_id
-            SET p.status = 'available'
-            WHERE p.status = 'maintenance'
-            AND r.status IN ('confirmed', 'pending', 'checked_in')
-            AND ${sqlCondition}
-        `;
-
-        db.query(sqlResetTables, (err) => {
-            if (err) console.error("⚠️ Gagal Auto-Release Meja:", err);
-            
-            db.query(sqlResetParking, (err) => {
-                if (err) console.error("⚠️ Gagal Auto-Release Parkir:", err);
-                resolve();
-            });
-        });
-    });
-};
 const PORT = 3000;
-
 const APP_DOMAIN = process.env.APP_DOMAIN || "localhost:3000";
-
-app.set('trust proxy', 1); 
+app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.json()); 
-
+app.use(bodyParser.json());
 const sessionStore = new MySQLStore({}, db);
-
 app.use(session({
     key: 'session_cookie_name',
     secret: process.env.SESSION_SECRET || 'rahasia_default',
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-        secure: true, 
+    cookie: {
+        secure: true,
         maxAge: 3600000,
         sameSite: 'lax'
     }
@@ -93,24 +42,21 @@ const requireAdmin = (req, res, next) => {
     }
     next();
 };
-
 // --- OPTIMASI EMAIL (POOLING) ---
 // pool: true membuat koneksi tetap hidup, jadi kirim email kedua dst lebih cepat
 const transporter = nodemailer.createTransport({
-    pool: true, 
+    pool: true,
     host: 'smtp.gmail.com',
     port: 465,
     secure: true,
     auth: {
-        user: process.env.GMAIL_USER || 'anjargaming06@gmail.com', 
-        pass: process.env.GMAIL_PASS || 'jtjyoqtnskprfmrj' 
+        user: process.env.GMAIL_USER || 'anjargaming06@gmail.com',
+        pass: process.env.GMAIL_PASS || 'jtjyoqtnskprfmrj'
     },
     maxConnections: 5,
     maxMessages: 100
 });
-
 // --- ROUTES ---
-
 app.get('/', (req, res) => {
     res.render('landing', { user: req.session.userId ? req.session : null });
 });
@@ -122,29 +68,17 @@ app.get('/menu', (req, res) => {
     });
 });
 
-// --- ROUTE DASHBOARD (DENGAN AUTO RESET) ---
-// Perhatikan penambahan kata 'async' di sebelum (req, res)
-app.get('/dashboard', requireLogin, async (req, res) => {
-    
-    // 1. Jalankan pembersihan slot otomatis sebelum ambil data
-    try {
-        await releaseExpiredSlots();
-    } catch (error) {
-        console.error("Error saat cleaning slots:", error);
-    }
-
-    // 2. Ambil data meja & parkir (Kode asli Anda)
+app.get('/dashboard', requireLogin, (req, res) => {
     const sqlTables = "SELECT * FROM tables ORDER BY id ASC";
     const sqlParking = "SELECT * FROM parking_slots ORDER BY id ASC";
-
     db.query(sqlTables, (err, tablesResult) => {
         if (err) throw err;
         db.query(sqlParking, (err, parkingResult) => {
             if (err) throw err;
             const mobil = parkingResult.filter(slot => slot.type === 'car');
             const motor = parkingResult.filter(slot => slot.type === 'bike');
-            res.render('dashboard', { 
-                tables: tablesResult, mobil: mobil, motor: motor, user: req.session 
+            res.render('dashboard', {
+                tables: tablesResult, mobil: mobil, motor: motor, user: req.session
             });
         });
     });
@@ -152,19 +86,17 @@ app.get('/dashboard', requireLogin, async (req, res) => {
 // --- ROUTE HISTORY (RIWAYAT) ---
 app.get('/history', requireLogin, (req, res) => {
     const userId = req.session.userId;
-    
-    // Ambil semua reservasi milik user ini, urutkan dari yang terbaru
-    const sql = `SELECT * FROM reservations 
-                 WHERE user_id = ? 
-                 ORDER BY created_at DESC`;
 
+    // Ambil semua reservasi milik user ini, urutkan dari yang terbaru
+    const sql = `SELECT * FROM reservations
+                 WHERE user_id = ?
+                 ORDER BY created_at DESC`;
     db.query(sql, [userId], (err, results) => {
         if (err) throw err;
-        
         // Render halaman history
-        res.render('history', { 
-            bookings: results, 
-            user: req.session 
+        res.render('history', {
+            bookings: results,
+            user: req.session
         });
     });
 });
@@ -228,58 +160,23 @@ app.get('/logout', (req, res) => {
 
 // Booking
 app.post('/book', requireLogin, (req, res) => {
-    // 1. Ambil input jam & ID dari form
-    const { time, table_id, parking_id } = req.body;
+    const { name, email, phone, date, time, table_id, parking_id } = req.body;
     const userId = req.session.userId;
-
-    // --- [STEP 1: PAKSA TANGGAL HARI INI (WIB)] ---
-    // Kita abaikan tanggal dari form yang mungkin salah/kemarin.
-    // Kode ini mengambil jam Indonesia saat ini.
-    const nowWIB = new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"});
-    const dateObj = new Date(nowWIB); 
-
-    const yyyy = dateObj.getFullYear();
-    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const dd = String(dateObj.getDate()).padStart(2, '0');
-    
-    // Hasil: "2025-12-18" (Atau tanggal hari ini yang benar)
-    const forcedDate = `${yyyy}-${mm}-${dd}`; 
-
-    // --- [STEP 2: HITUNG DURASI 2 MENIT] ---
     let [hours, minutes] = time.split(':');
-    
-    // Gunakan dateObj (WIB) sebagai patokan
-    let bookingDate = new Date(dateObj); 
-    bookingDate.setHours(parseInt(hours));
-    bookingDate.setMinutes(parseInt(minutes));
-    bookingDate.setSeconds(0);
-
-    // Tambah 2 Menit dari waktu input
-    let endDate = new Date(bookingDate.getTime() + 2 * 60000); 
-    
-    // Ambil string jam selesainya (HH:MM:SS)
-    const endTime = endDate.toTimeString().split(' ')[0]; 
+    let endDate = new Date();
+    endDate.setHours(parseInt(hours) + 1);
+    endDate.setMinutes(parseInt(minutes) + 30);
+    const endTime = endDate.toTimeString().split(' ')[0];
     const startTime = time + ":00";
-    
-    // ----------------------------------------
-
     const finalParkingId = parking_id === '' ? null : parking_id;
     const bookingId = "RES-" + Date.now();
-
-    const sqlBooking = `INSERT INTO reservations 
-        (id, user_id, table_id, parking_slot_id, reservation_date, start_time, end_time, status, payment_status) 
+    const sqlBooking = `INSERT INTO reservations
+        (id, user_id, table_id, parking_slot_id, reservation_date, start_time, end_time, status, payment_status)
         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'unpaid')`;
-
-    // PENTING: Gunakan 'forcedDate' di bawah ini
-    db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, forcedDate, startTime, endTime], (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.send("Gagal Reservasi: " + err.message);
-        }
-        // Set status jadi Maintenance/Booked
+    db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, date, startTime, endTime], (err, result) => {
+        if (err) return res.send("Gagal Reservasi.");
         db.query("UPDATE tables SET status = 'maintenance' WHERE id = ?", [table_id]);
         if (finalParkingId) db.query("UPDATE parking_slots SET status = 'maintenance' WHERE id = ?", [finalParkingId]);
-        
         res.redirect('/pay/' + bookingId);
     });
 });
@@ -297,16 +194,13 @@ app.get('/pay/:id', requireLogin, (req, res) => {
 app.post('/pay/confirm/:id', requireLogin, (req, res) => {
     const bookingId = req.params.id;
     const sqlUpdate = "UPDATE reservations SET status = 'confirmed', payment_status = 'paid' WHERE id = ?";
-    
     db.query(sqlUpdate, [bookingId], (err, result) => {
         if (err) return res.send("Gagal verifikasi pembayaran.");
-
         const sqlGet = `SELECT r.*, u.name, u.email FROM reservations r JOIN users u ON r.user_id = u.id WHERE r.id = ?`;
         db.query(sqlGet, [bookingId], async (err, results) => {
             if (results.length === 0) return res.redirect('/dashboard');
             const data = results[0];
             const datePretty = new Date(data.reservation_date).toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
             // DESAIN PREMIUM DIKEMBALIKAN
             const mailOptions = {
                 from: '"DineDock System" <' + (process.env.GMAIL_USER || 'anjargaming06@gmail.com') + '>',
@@ -321,14 +215,12 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
                         <div style="padding: 30px;">
                             <p style="font-size: 16px; color: #333;">Halo <strong>${data.name}</strong>,</p>
                             <p style="color: #666; line-height: 1.6;">Pembayaran Booking Fee sebesar <strong>Rp 50.000</strong> telah kami terima.</p>
-                            
                             <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: #f9f9f9; border-radius: 5px;">
                                 <tr><td style="padding: 15px; color: #666; border-bottom: 1px solid #eee;">Booking ID</td><td style="padding: 15px; font-weight: bold;">${bookingId}</td></tr>
                                 <tr><td style="padding: 15px; color: #666; border-bottom: 1px solid #eee;">Tanggal</td><td style="padding: 15px; font-weight: bold;">${datePretty}</td></tr>
                                 <tr><td style="padding: 15px; color: #666; border-bottom: 1px solid #eee;">Jam</td><td style="padding: 15px; font-weight: bold;">${data.start_time}</td></tr>
                                 <tr><td style="padding: 15px; color: #666; border-bottom: 1px solid #eee;">Meja</td><td style="padding: 15px; font-weight: bold; color: #c5a059;">${data.table_id}</td></tr>
                             </table>
-
                             <div style="text-align: center; margin-top: 35px;">
                                 <a href="https://${APP_DOMAIN}/ticket/${bookingId}" style="background-color: #c5a059; color: #000; padding: 14px 30px; text-decoration: none; font-weight: bold; border-radius: 50px; display: inline-block;">
                                     LIHAT E-TICKET
@@ -338,7 +230,6 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
                     </div>
                 `
             };
-
             // LOGIKA PENGIRIMAN
             try {
                 console.log("⏳ Mengirim email...");
@@ -348,7 +239,6 @@ app.post('/pay/confirm/:id', requireLogin, (req, res) => {
             } catch (error) {
                 console.error("⚠️ Gagal kirim email (tapi lanjut):", error.message);
             }
-            
             res.redirect('/ticket/' + bookingId);
         });
     });
@@ -391,13 +281,12 @@ app.get('/admin', requireAdmin, (req, res) => {
         });
         const unpaidCount = results.filter(r => r.payment_status === 'unpaid').length;
         const paidCount = paidBookings.length;
-        res.render('admin', { 
+        res.render('admin', {
             reservations: results,
             stats: { revenue: totalRevenue, guests: totalGuests, mobil: mobilCount, motor: motorCount, paid: paidCount, unpaid: unpaidCount }
         });
     });
 });
-
 app.post('/admin/checkin/:id', requireAdmin, (req, res) => {
     db.query("UPDATE reservations SET status = 'checked_in' WHERE id = ?", [req.params.id], (err) => {
         res.redirect('/admin');
@@ -422,12 +311,11 @@ app.get('/fix-db', (req, res) => {
     res.send("<h1>🔄 Database Sedang Diupdate...</h1><p>Silakan tunggu 5-10 detik, lalu <a href='/menu'>Cek Halaman Menu</a>.</p>");
 });
 // SETUP
-const initDatabase = require('./config/setup'); 
+const initDatabase = require('./config/setup');
 if (require.main === module) {
     initDatabase();
     app.listen(PORT, () => {
         console.log(`\n🚀 Server berjalan di Port ${PORT}`);
     });
 }
-
 module.exports = app;
