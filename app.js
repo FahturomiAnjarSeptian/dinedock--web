@@ -11,6 +11,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const app = express();
 const PORT = 3000;
 const APP_DOMAIN = process.env.APP_DOMAIN || "localhost:3000";
+
 app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
@@ -82,10 +83,6 @@ function autoExpireBookings() {
         });
     });
 }
-
-// 🔥 INI YANG SERING TERLUPA
-setInterval(autoExpireBookings, 30 * 1000);
-
 
 app.use((req, res, next) => {
     autoExpireBookings();
@@ -345,10 +342,13 @@ app.get('/fix-db', (req, res) => {
 });
 // SETUP
 const initDatabase = require('./config/setup');
-if (require.main === module) {
-    initDatabase();
+initDatabase();
+
+// ⚠️ JANGAN listen di Vercel
+if (!process.env.VERCEL) {
     app.listen(PORT, () => {
-        console.log(`\n🚀 Server berjalan di Port ${PORT}`);
+        console.log(`🚀 Server berjalan di Port ${PORT}`);
     });
 }
+
 module.exports = app;
