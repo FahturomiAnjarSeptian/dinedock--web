@@ -5,10 +5,18 @@
       "maxDuration": 60
     }
   },
-  "rewrites": [
+  "routes": [
     {
-      "source": "/(.*)",
-      "destination": "/app.js"
+      "src": "^/img/(.*)",
+      "dest": "/public/img/$1"
+    },
+    {
+      "src": "^/css/(.*)",
+      "dest": "/public/css/$1"
+    },
+    {
+      "src": "^/(.*)",
+      "dest": "/app.js"
     }
   ]
 }
