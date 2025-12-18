@@ -18,15 +18,13 @@ const app = express();
 // Yang penting STOP menghapus booking secara instan dulu.
 
 // --- [FINAL FIX] SINKRONISASI AIVEN UTC -> WIB ---
+// --- [FIXED] FUNGSI AUTO-RELEASE (SINKRONISASI UTC -> WIB) ---
 const releaseExpiredSlots = () => {
     return new Promise((resolve, reject) => {
         
-        // LOGIKA:
-        // Jam Database (UTC) + 7 JAM = Jam WIB (Indonesia)
-        // Kita bandingkan Waktu Selesai Booking dengan Jam WIB tersebut.
-        
+        // LOGIKA: Bandingkan Waktu Booking dengan (Jam Database UTC + 7 JAM)
         const sqlCondition = `
-            TIMESTAMP(CONCAT(r.reservation_date, ' ', r.end_time)) <= DATE_ADD(NOW(), INTERVAL 7 HOUR)
+            TIMESTAMP(CONCAT(r.reservation_date, ' ', r.end_time)) <= DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR)
         `;
 
         const sqlResetTables = `
@@ -230,20 +228,41 @@ app.get('/logout', (req, res) => {
 
 // Booking
 app.post('/book', requireLogin, (req, res) => {
-    const { name, email, phone, date, time, table_id, parking_id } = req.body;
+    // 1. Ambil input jam & ID dari form
+    const { time, table_id, parking_id } = req.body;
     const userId = req.session.userId;
+
+    // --- [STEP 1: PAKSA TANGGAL HARI INI (WIB)] ---
+    // Kita abaikan tanggal dari form yang mungkin salah/kemarin.
+    // Kode ini mengambil jam Indonesia saat ini.
+    const nowWIB = new Date().toLocaleString("en-US", {timeZone: "Asia/Jakarta"});
+    const dateObj = new Date(nowWIB); 
+
+    const yyyy = dateObj.getFullYear();
+    const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const dd = String(dateObj.getDate()).padStart(2, '0');
+    
+    // Hasil: "2025-12-18" (Atau tanggal hari ini yang benar)
+    const forcedDate = `${yyyy}-${mm}-${dd}`; 
+
+    // --- [STEP 2: HITUNG DURASI 2 MENIT] ---
     let [hours, minutes] = time.split(':');
-    let bookingTime = new Date();
-    bookingTime.setHours(parseInt(hours));
-    bookingTime.setMinutes(parseInt(minutes));
-    bookingTime.setSeconds(0);
+    
+    // Gunakan dateObj (WIB) sebagai patokan
+    let bookingDate = new Date(dateObj); 
+    bookingDate.setHours(parseInt(hours));
+    bookingDate.setMinutes(parseInt(minutes));
+    bookingDate.setSeconds(0);
 
-    // 2. Hitung End Time = Booking Time + 1 Menit (60000 ms)
-    let endDate = new Date(bookingTime.getTime() + 2 * 60000); 
-
-    // 3. Format ke string jam (HH:MM:SS)
-    const endTime = endDate.toTimeString().split(' ')[0];
+    // Tambah 2 Menit dari waktu input
+    let endDate = new Date(bookingDate.getTime() + 2 * 60000); 
+    
+    // Ambil string jam selesainya (HH:MM:SS)
+    const endTime = endDate.toTimeString().split(' ')[0]; 
     const startTime = time + ":00";
+    
+    // ----------------------------------------
+
     const finalParkingId = parking_id === '' ? null : parking_id;
     const bookingId = "RES-" + Date.now();
 
@@ -251,10 +270,16 @@ app.post('/book', requireLogin, (req, res) => {
         (id, user_id, table_id, parking_slot_id, reservation_date, start_time, end_time, status, payment_status) 
         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'unpaid')`;
 
-    db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, date, startTime, endTime], (err, result) => {
-        if (err) return res.send("Gagal Reservasi.");
+    // PENTING: Gunakan 'forcedDate' di bawah ini
+    db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, forcedDate, startTime, endTime], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.send("Gagal Reservasi: " + err.message);
+        }
+        // Set status jadi Maintenance/Booked
         db.query("UPDATE tables SET status = 'maintenance' WHERE id = ?", [table_id]);
         if (finalParkingId) db.query("UPDATE parking_slots SET status = 'maintenance' WHERE id = ?", [finalParkingId]);
+        
         res.redirect('/pay/' + bookingId);
     });
 });
