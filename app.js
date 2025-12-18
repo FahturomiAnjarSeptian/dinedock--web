@@ -42,6 +42,7 @@ const requireAdmin = (req, res, next) => {
     }
     next();
 };
+
 // --- OPTIMASI EMAIL (POOLING) ---
 // pool: true membuat koneksi tetap hidup, jadi kirim email kedua dst lebih cepat
 const transporter = nodemailer.createTransport({
@@ -56,6 +57,29 @@ const transporter = nodemailer.createTransport({
     maxConnections: 5,
     maxMessages: 100
 });
+function autoExpireBookings() {
+    const sql = `
+        SELECT * FROM reservations
+        WHERE status IN ('confirmed', 'checked_in')
+        AND booking_end < NOW()
+    `;
+
+    db.query(sql, (err, results) => {
+        if (err) return console.error(err);
+
+        results.forEach(b => {
+            db.query("UPDATE reservations SET status = 'expired' WHERE id = ?", [b.id]);
+            db.query("UPDATE tables SET status = 'available' WHERE id = ?", [b.table_id]);
+            if (b.parking_slot_id)
+                db.query("UPDATE parking_slots SET status = 'available' WHERE id = ?", [b.parking_slot_id]);
+        });
+    });
+}
+app.use((req, res, next) => {
+    autoExpireBookings();
+    next();
+});
+
 // --- ROUTES ---
 app.get('/', (req, res) => {
     res.render('landing', { user: req.session.userId ? req.session : null });
@@ -162,18 +186,20 @@ app.get('/logout', (req, res) => {
 app.post('/book', requireLogin, (req, res) => {
     const { name, email, phone, date, time, table_id, parking_id } = req.body;
     const userId = req.session.userId;
-    let [hours, minutes] = time.split(':');
-    let endDate = new Date();
-    endDate.setHours(parseInt(hours) + 1);
-    endDate.setMinutes(parseInt(minutes) + 30);
-    const endTime = endDate.toTimeString().split(' ')[0];
-    const startTime = time + ":00";
+    // === AUTO EXPIRE 90 MENIT ===
+    const bookingStart = new Date(`${date}T${time}:00`);
+    const bookingEnd = new Date(bookingStart.getTime() + 2 * 60000); // 90 menit
+
+    const startTime = bookingStart.toTimeString().slice(0, 8);
+    const endTime   = bookingEnd.toTimeString().slice(0, 8);
+
     const finalParkingId = parking_id === '' ? null : parking_id;
     const bookingId = "RES-" + Date.now();
     const sqlBooking = `INSERT INTO reservations
-        (id, user_id, table_id, parking_slot_id, reservation_date, start_time, end_time, status, payment_status)
+        (id, user_id, table_id, parking_slot_id, reservation_date, start_time, end_time, booking_start, booking_end,status, payment_status)
         VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'unpaid')`;
-    db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, date, startTime, endTime], (err, result) => {
+    db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, date, startTime, endTime, bookingStart,
+    bookingEnd], (err, result) => {
         if (err) return res.send("Gagal Reservasi.");
         db.query("UPDATE tables SET status = 'maintenance' WHERE id = ?", [table_id]);
         if (finalParkingId) db.query("UPDATE parking_slots SET status = 'maintenance' WHERE id = ?", [finalParkingId]);
