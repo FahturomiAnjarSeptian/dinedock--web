@@ -60,8 +60,8 @@ const transporter = nodemailer.createTransport({
 function autoExpireBookings() {
     const sql = `
         SELECT * FROM reservations
-        WHERE status IN ('confirmed', 'checked_in')
-        AND booking_end < NOW()
+        WHERE status IN ('pending', 'confirmed', 'checked_in')
+        AND booking_end < DATE_ADD(NOW(), INTERVAL 7 HOUR)
     `;
 
     db.query(sql, (err, results) => {
@@ -75,6 +75,7 @@ function autoExpireBookings() {
         });
     });
 }
+
 app.use((req, res, next) => {
     autoExpireBookings();
     next();
