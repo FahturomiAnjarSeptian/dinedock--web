@@ -197,7 +197,7 @@ app.post('/book', requireLogin, (req, res) => {
     const bookingId = "RES-" + Date.now();
     const sqlBooking = `INSERT INTO reservations
         (id, user_id, table_id, parking_slot_id, reservation_date, start_time, end_time, booking_start, booking_end,status, payment_status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', 'unpaid')`;
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'unpaid')`;
     db.query(sqlBooking, [bookingId, userId, table_id, finalParkingId, date, startTime, endTime, bookingStart,
     bookingEnd], (err, result) => {
         if (err) return res.send("Gagal Reservasi.");
